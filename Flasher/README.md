@@ -5,6 +5,7 @@ and put in new electronics.  The device now has a couple
 operating modes so it can be used for different purposes.
 
 ![barrier flasher](./pictures/barrier_flasher.png)
+![barrier flasher](./pictures/barrier_flasher.gif)
 
 Modes include:
 * Flash every second
