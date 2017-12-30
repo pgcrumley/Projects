@@ -54,7 +54,6 @@ The basic control operation is:
 import sys
 import time
 import RPi.GPIO as GPIO
-from msilib import _Unspecified
 
 DEBUG = False
 
@@ -160,7 +159,16 @@ class Controller:
         Each cycle of _PERIOD_IN_SECONDS long and the duty cycle sent is 
         duty_cycle * _PERIOD_IN_SECONDS / 10.
         """
-        
+        if DEBUG:
+            print('in __transmit:',
+                  file=sys.stderr)
+            print('  rf, rb, lf, lb:  {} {} {} {}'.format(rf, rb, lf, lb),
+                  file=sys.stderr)
+            print('  duty_cycle = {}'.format(duty_cycle),
+                  file=sys.stderr)
+            print('  count = {}'.format(count),
+                  file=sys.stderr)
+            
         if (count < 0):
             raise ValueError('count of {} was not >= to 0'.format(count))
         
@@ -173,9 +181,13 @@ class Controller:
         
         low_time = (duty_cycle * Controller._PERIOD_IN_SECONDS) / 10
         high_time = ((10 - duty_cycle) * Controller._PERIOD_IN_SECONDS) / 10
+        if DEBUG:
+            print('  low_time / high_time:  {} / {}'.format(low_time, 
+                                                            high_time),
+                  file=sys.stderr)
+        
         for c in range(count):
             # set appropriate pins LOW
-            GPIO.output()
             if rf:
                 GPIO.output(self._RIGHT_FORWARD_PIN, GPIO.LOW)
             else:
@@ -213,6 +225,14 @@ class Controller:
     
         "op" values are recognized for any case of the parameter.
         """
+
+        if DEBUG:
+            print('in drive:',
+                  file=sys.stderr)
+            print('  op =              "{}"'.format(op), file=sys.stderr)
+            print('  speed =           {}'.format(speed), file=sys.stderr)
+            print('  time_in_seconds = {}'.format(time_in_seconds),
+                  file=sys.stderr)
         
         if not self.__alive:
             raise RuntimeError('Controller has been closed')
@@ -233,7 +253,7 @@ class Controller:
         done_time = time.time() + time_in_seconds
 
         # if not 0, make sure this is a value speed number
-        if duty_cycle not in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
+        if speed not in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
             raise ValueError('speed of {} is not an integer between 1 and 10 inclusive'.format(speed))
         
         # determine how many cycles of signal to send -- round down
@@ -257,6 +277,8 @@ class Controller:
         
         # don't be done too soon
         delay_time = done_time - time.time()
+        if DEBUG:
+            print('  delay_time = {}'.format(delay_time), file=sys.stderr)
         if delay_time > 0:
             time.sleep(delay_time)
 
@@ -294,7 +316,7 @@ if '__main__' == __name__ :
         print('speed:     {}'.format(speed), file=sys.stderr)
         print('duration:  {}'.format(duration), file=sys.stderr)
     
-    controller = Controller(board_pin)
+    controller = Controller()
     controller.drive(op, speed, duration)
     
     controller.close()
