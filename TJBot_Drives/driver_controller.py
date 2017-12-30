@@ -55,7 +55,7 @@ import sys
 import time
 import RPi.GPIO as GPIO
 
-DEBUG = False
+DEBUG = True
 
 class Controller:
     """
@@ -205,13 +205,14 @@ class Controller:
             else:
                 GPIO.output(self._LEFT_BACKWARD_PIN, GPIO.HIGH)
             time.sleep(low_time)
-
-            # turn off motors
-            GPIO.output(self._RIGHT_FORWARD_PIN, GPIO.HIGH)
-            GPIO.output(self._RIGHT_BACKWARD_PIN, GPIO.HIGH)
-            GPIO.output(self._LEFT_FORWARD_PIN, GPIO.HIGH)
-            GPIO.output(self._LEFT_BACKWARD_PIN, GPIO.HIGH)
-            time.sleep(low_time)
+            
+            # turn off motors if the duty cycle is not 100%
+            if (duty_cycle < 10):
+                GPIO.output(self._RIGHT_FORWARD_PIN, GPIO.HIGH)
+                GPIO.output(self._RIGHT_BACKWARD_PIN, GPIO.HIGH)
+                GPIO.output(self._LEFT_FORWARD_PIN, GPIO.HIGH)
+                GPIO.output(self._LEFT_BACKWARD_PIN, GPIO.HIGH)
+                time.sleep(low_time)
 
 
 
