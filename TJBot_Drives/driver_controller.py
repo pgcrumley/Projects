@@ -139,7 +139,7 @@ class Controller:
         GPIO.setup(self._LEFT_BACKWARD_PIN, GPIO.OUT)
         GPIO.output(self._LEFT_BACKWARD_PIN, GPIO.HIGH)
 
-        self.__alive = True
+        self._alive = True
 
     def close(self):
         """
@@ -147,8 +147,8 @@ class Controller:
         """
         if DEBUG:
             print('entering close:', file=sys.stderr)
-            
-        self.__alive = False
+
+        self._alive = False
         # turn off all motor signals
         self._set_motor_signals(False, False, False, False)
         # make sure we can't set signals anymore
@@ -199,7 +199,7 @@ class Controller:
         """
         Transmit signals which turns off all motors
         """
-        if not self.__alive:
+        if not self._alive:
             raise RuntimeError('Controller has been closed')
         
         if DEBUG:
@@ -220,7 +220,7 @@ class Controller:
         op is a key in the _OP_TO_SIGNALS map.
         "op" values are recognized for any case of the parameter.
         """
-        if not self.__alive:
+        if not self._alive:
             raise RuntimeError('Controller has been closed')
         
         # ignore case of op parameter
@@ -249,7 +249,7 @@ class Controller:
 
         time_in_seconds is how long to do the operation.
         """
-        if not self.__alive:
+        if not self._alive:
             raise RuntimeError('Controller has been closed')
         
         if DEBUG:
@@ -282,7 +282,7 @@ class Controller:
         ops is a list of (op, time_in_seconds) where each op is a key 
         in Controllers._OPS_TO_SIGNALS.
         """
-        if not self.__alive:
+        if not self._alive:
             raise RuntimeError('Controller has been closed')
         
         if DEBUG:
@@ -326,7 +326,7 @@ if '__main__' == __name__ :
               ('forward', 1), ('left', 1),
               ('forward', 1), ('left', 1)
               ]
-        controller.drive_ops(ops)        
+        controller.drive_ops(ops)
     elif 3 == len(sys.argv):
         op = sys.argv[1]
         duration = float(sys.argv[2])
