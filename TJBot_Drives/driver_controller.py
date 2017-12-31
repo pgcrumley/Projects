@@ -37,18 +37,13 @@ Operation  L motor  R motor  Description
   CW         F        B      Spin clockwise
   CCW        B        F      Spin counter-clockwise
 
-There are 10 speeds from 1-10.  10 is maximum speed and 1 is a 10% duty cycle.
-
-A speed of 0 for any of the above operations results in no motion.  
-The "idle" operation at any speed results in no motion.
 
 The basic control operation is:
-  drive(op, speed, time_in_seconds)
+  drive(op, time_in_seconds)
     where op is "idle", "forward", "backward", "left", "right", "cw", or "ccw"
-    speed is a number between 0 and 10, inclusive.  0 is no motion
     time_in_seconds is how long to do the operation
     
-    "op" values are recognized for any case of the parameter.
+    "op" values are recognized for any case of the parameter, e.g. "CW" or "cw"
 """
 
 import sys
@@ -63,18 +58,10 @@ class Controller:
     
     Pin numbers are Raspberry Pi board numbers, not GPIO numbers.
     """
-    _RIGHT_FORWARD_PIN = 0
-    _RIGHT_BACKWARD_PIN = 0
-    _LEFT_FORWARD_PIN = 0
-    _LEFT_BACKWARD_PIN = 0
-    
     _VALID_PINS = [3, 5, 7, 8, 10, 
                    11, 12, 13, 15, 16, 18, 19, 
                    21, 22, 23, 24, 26, 29, 
                    31, 32, 33, 35, 36, 37, 38, 40]
-
-    _PERIOD_IN_SECONDS = 0.1  # each signal is 100 milliseconds in length
-
 
     def __init__(self, 
                  right_forward_pin = 24,
@@ -140,98 +127,68 @@ class Controller:
 
     def close(self):
         """
-        Release resources and mark controller as dead
+        Mark controller as dead, turn off motors, and release resources.
         """
+        
         self.__alive = False
+        # turn off all motor signals
+        self.set_motor_signals(False, False, False, False)
+        # make sure we can't set signals anymore
         self._RIGHT_FORWARD_PIN = None
         self._RIGHT_BACKWARD_PIN = None
         self._LEFT_FORWARD_PIN = None
         self._LEFT_BACKWARD_PIN = None
+        # let other processes use the GPIO pins
         GPIO.cleanup()
             
-    def __transmit_(self, rf, rb, lf, lb, duty_cycle, count):
+    def set_motor_signals(self, rf, rb, lf, lb):
         """
-        Transmit a number of signal sequences with a given duty cycle.
+        Transmit a signal for the given motor pattern.
         rf, rb, lf, lb are right forward / backward and left forward / backward
-        duty_cycle is a number between 1 and 10, inclusive.
-        count is the number of time periods to send.  
-        
-        Each cycle of _PERIOD_IN_SECONDS long and the duty cycle sent is 
-        duty_cycle * _PERIOD_IN_SECONDS / 10.
         """
         if DEBUG:
-            print('in __transmit:',
+            print('entering __transmit:',
                   file=sys.stderr)
             print('  rf, rb, lf, lb:  {} {} {} {}'.format(rf, rb, lf, lb),
                   file=sys.stderr)
-            print('  duty_cycle = {}'.format(duty_cycle),
-                  file=sys.stderr)
-            print('  count = {}'.format(count),
-                  file=sys.stderr)
-            
-        if (count < 0):
-            raise ValueError('count of {} was not >= to 0'.format(count))
         
-        # special case for 0 duty_cycle
-        if (0 == duty_cycle):
-            time.sleep(count * Controller._PERIOD_IN_SECONDS)
+        # set appropriate pins LOW
+        if rf:
+            GPIO.output(self._RIGHT_FORWARD_PIN, GPIO.LOW)
+        else:
+            GPIO.output(self._RIGHT_FORWARD_PIN, GPIO.HIGH)
+        if rb:
+            GPIO.output(self._RIGHT_BACKWARD_PIN, GPIO.LOW)
+        else:
+            GPIO.output(self._RIGHT_BACKWARD_PIN, GPIO.HIGH)
+        if lf:
+            GPIO.output(self._LEFT_FORWARD_PIN, GPIO.LOW)
+        else:
+            GPIO.output(self._LEFT_FORWARD_PIN, GPIO.HIGH)
+        if lb:
+            GPIO.output(self._LEFT_BACKWARD_PIN, GPIO.LOW)
+        else:
+            GPIO.output(self._LEFT_BACKWARD_PIN, GPIO.HIGH)
         
-        if duty_cycle not in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
-            raise ValueError('duty_cycle of {} is not an integer between 1 and 10 inclusive'.format(duty_cycle))
-        
-        low_time = (duty_cycle * Controller._PERIOD_IN_SECONDS) / 10
-        high_time = ((10 - duty_cycle) * Controller._PERIOD_IN_SECONDS) / 10
         if DEBUG:
-            print('  low_time / high_time:  {} / {}'.format(low_time, 
-                                                            high_time),
+            print('leaving __transmit:',
                   file=sys.stderr)
-        
-        for c in range(count):
-            # set appropriate pins LOW
-            if rf:
-                GPIO.output(self._RIGHT_FORWARD_PIN, GPIO.LOW)
-            else:
-                GPIO.output(self._RIGHT_FORWARD_PIN, GPIO.HIGH)
-            if rb:
-                GPIO.output(self._RIGHT_BACKWARD_PIN, GPIO.LOW)
-            else:
-                GPIO.output(self._RIGHT_BACKWARD_PIN, GPIO.HIGH)
-            if lf:
-                GPIO.output(self._LEFT_FORWARD_PIN, GPIO.LOW)
-            else:
-                GPIO.output(self._LEFT_FORWARD_PIN, GPIO.HIGH)
-            if lb:
-                GPIO.output(self._LEFT_BACKWARD_PIN, GPIO.LOW)
-            else:
-                GPIO.output(self._LEFT_BACKWARD_PIN, GPIO.HIGH)
-            time.sleep(low_time)
-            
-            # turn off motors if the duty cycle is not 100%
-            if (duty_cycle < 10):
-                GPIO.output(self._RIGHT_FORWARD_PIN, GPIO.HIGH)
-                GPIO.output(self._RIGHT_BACKWARD_PIN, GPIO.HIGH)
-                GPIO.output(self._LEFT_FORWARD_PIN, GPIO.HIGH)
-                GPIO.output(self._LEFT_BACKWARD_PIN, GPIO.HIGH)
-                time.sleep(low_time)
 
 
-
-    def drive(self, op, speed, time_in_seconds):
+    def drive(self, op, time_in_seconds):
         """
         Send the proper signals on the GPIO pins 
 
         op is "idle", "forward", "backward", "left", "right", "cw", or "ccw"
-        speed is a number between 0 and 10, inclusive.  0 is no motion
         time_in_seconds is how long to do the operation
     
         "op" values are recognized for any case of the parameter.
         """
 
         if DEBUG:
-            print('in drive:',
+            print('entering drive:',
                   file=sys.stderr)
             print('  op =              "{}"'.format(op), file=sys.stderr)
-            print('  speed =           {}'.format(speed), file=sys.stderr)
             print('  time_in_seconds = {}'.format(time_in_seconds),
                   file=sys.stderr)
         
@@ -240,48 +197,39 @@ class Controller:
         
         # ignore case of op parameter
         lc_op = op.lower()
-
-        # special case for 0 speed parameter or "idle" op
-        if (0 == speed or 'idle' == lc_op):
-            time.sleep(time_in_seconds)
-            return
         
         # special case for 0 time_in_seconds
         if (time_in_seconds <= 0):
             return
 
-        # determine when to be done
-        done_time = time.time() + time_in_seconds
+        try:
+            # now send the appropriate signals
+            if 'forward' == lc_op:
+                self.set_motor_signals(True, False, True, False)
+            elif 'backward' == lc_op:
+                self.set_motor_signals(False, True, False, True)
+            elif 'right' == lc_op:
+                self.set_motor_signals(False, False, True, False)
+            elif 'left' == lc_op:
+                self.set_motor_signals(True, False, False, False)
+            elif 'cw' == lc_op:
+                self.set_motor_signals(False, True, True, False)
+            elif 'ccw' == lc_op:
+                self.set_motor_signals(True, False, False, True)
+            elif 'idle' == lc_op:
+                self.set_motor_signals(False, False, False, False)
+            else:
+                raise ValueError('op of "{}" is not defined'.format(op))
+    
+            # drive for indicated amount of time
+            time.sleep(time_in_seconds)
+        finally:
+            # always turn off motors
+            self.set_motor_signals(False, False, False, False)
 
-        # if not 0, make sure this is a value speed number
-        if speed not in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
-            raise ValueError('speed of {} is not an integer between 1 and 10 inclusive'.format(speed))
-        
-        # determine how many cycles of signal to send -- round down
-        count = int(time_in_seconds / Controller._PERIOD_IN_SECONDS)
-
-        # now send the appropriate signals
-        if 'forward' == lc_op:
-            self.__transmit_(True, False, True, False, speed, count)
-        elif 'backward' == lc_op:
-            self.__transmit_(False, True, False, True, speed, count)
-        elif 'right' == lc_op:
-            self.__transmit_(False, False, True, False, speed, count)
-        elif 'left' == lc_op:
-            self.__transmit_(True, False, False, False, speed, count)
-        elif 'cw' == lc_op:
-            self.__transmit_(False, True, True, False, speed, count)
-        elif 'ccw' == lc_op:
-            self.__transmit_(True, False, False, True, speed, count)
-        else:
-            raise ValueError('op of "{}" is not defined'.format(op))
-        
-        # don't be done too soon
-        delay_time = done_time - time.time()
         if DEBUG:
-            print('  delay_time = {}'.format(delay_time), file=sys.stderr)
-        if delay_time > 0:
-            time.sleep(delay_time)
+            print('leaving drive:',
+                  file=sys.stderr)
 
     #
     # end of class Controller        
