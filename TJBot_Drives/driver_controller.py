@@ -320,7 +320,7 @@ if '__main__' == __name__ :
     controller = Controller()
 
     ## normal case
-    if 0 == len(sys.argv):
+    if 1 == len(sys.argv):
         ops =[('forward', 1), ('left', 1),
               ('forward', 1), ('left', 1),
               ('forward', 1), ('left', 1),
@@ -332,7 +332,6 @@ if '__main__' == __name__ :
         duration = float(sys.argv[2])
         controller.drive_one_op(op, duration)
     else:
-        print('len(sys.argv) is {}'.format(len(sys.argv)), file=sys.stderr)
         usage()
 
     controller.close()
