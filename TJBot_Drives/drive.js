@@ -53,7 +53,7 @@ var tjConfig = {
         inactivityTimeout: 60 // close connection after 60 seconds of silence
     },
     wave: {
-        servoPin: 18 // corresponds to BCM 18 / physical PIN 12
+        servoPin: 23 // corresponds to BCM 23 / physical PIN 16
     }
 };
 var tj = new TJBot(hardware, tjConfig, credentials);
