@@ -2,7 +2,7 @@
 """
 MIT License
 
-Copyright (c) 2017 Paul G Crumley
+Copyright (c) 2017, 2018 Paul G Crumley
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,57 +24,64 @@ SOFTWARE.
 
 @author: pgcrumley@gmail.com
 
-Very simple web server to control Etekcity relays using a 433 MHz transmitter
-connected to a Raspberry Pi pin.
+Very simple web server to control a TOYDALOO RC dump truck.
 
-Send a JSON dictionary with keys of:
-  "address" (0-255)
-  "unit" (1-5)
-  "action" ("on"|"off")
-  optional "pin" (valid board pin number)
-The default pin number is 18.
+The server only responds to JSON requests and there are two types of 
+supported request.
+
+The first sends a JSON list of (op, time) where op can be ony of:
+  "stop", "halt", "forward", "backward", "right", "left", "cw", or "ccw" and
+  time is in seconds.  After all ops are run the truck is stopped.
+  
+The second sends a JSON item with a single op from the above list and the 
+device runs with that op till a new op is received.  
+
+Both forms of request are sent as a map.  
+
+Form 1:
+    { "drive_ops" : [ ("op1", time1), ("op2", time2), ... ] }
+Form 2:
+    { "drive" : "op" }
+
 
 try a curl command such as:
-  curl -H 'Content-Type: application/json' -X POST -d '{"address":21, 
-    "unit":1, "action": "on"}'  http://localhost:11111/
+  curl -H 'Content-Type: application/json' -X POST -d '{"drive_ops": 
+    [("forward", 2)", ("left", 0.5), ("backward", 1)]}'  http://localhost:9999/
 
 The server must run as root to have access to the GPIO pins.
-
 """
 
 import argparse
-import datetime
 import json
 import sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-from etekcity_controller import Transmitter
+from driver_controller import Controller
 
-DEBUG = 0
+DEBUG = False
 
 DEFAULT_LISTEN_ADDRESS = '127.0.0.1' # responds to only requests from localhost
 #DEFAULT_LISTEN_ADDRESS = '0.0.0.0'  # respond to request from any address
-DEFAULT_LISTEN_PORT = 11111                 # IP port
+DEFAULT_LISTEN_PORT = 9999                 # IP port
 DEFAULT_SERVER_ADDRESS = (DEFAULT_LISTEN_ADDRESS, DEFAULT_LISTEN_PORT)
 
 USE_MESSAGE = ('send a JSON dictionary with keys of '
                '<UL>'
-               '<LI>"address" (0-255)'
-               '<LI>"unit" (1-5)'
-               '<LI>"action" ("on"|"off")'
-               '<LI>optional "pin" (valid board pin number)'
+               '<LI>{"drive_ops" : [ ("op", time in seconds), ...]}'
+               '</UL>'
+               '<P>or</P>'
+               '<UL>'
+               '<LI>{"drive" : "op"}'
                '</UL>'
                )
 
-DEFAULT_PIN = 18
-
+CONTROLLER = Controller()
 
 class Simple_RequestHandler(BaseHTTPRequestHandler):
     '''
     A subclass of BaseHTTPRequestHandler for our work.
     '''
-    
-    
+
     def do_GET(self):
         '''
         handle the HTTP GET request
@@ -110,28 +117,24 @@ class Simple_RequestHandler(BaseHTTPRequestHandler):
             print('post data: "{}"'.format(data), file=sys.stderr)
 
         try:
-            pin_num = DEFAULT_PIN
-            if 'pin' in data:
-                pin_num = data['pin']
-            address_num = data['address']
-            unit_num = data['unit']
-            action = data['action']
-        
+            key = date.getkey()
             if DEBUG:
-                print('pin:     {}'.format(pin_num), file=sys.stderr)
-                print('address: {}'.format(address_num), file=sys.stderr)
-                print('unit:    {}'.format(unit_num), file=sys.stderr)
-                print('action:  {}'.format(action), file=sys.stderr)
+                print('key:     {}'.format(key), file=sys.stderr)
+            if 'drive' == key:
+                op = data[key]
+                CONTROLLER.drive(op)
+            elif 'drive_ops' == key:
+                ops_list = data[key]
+                CONTROLLER.drive_ops(ops_list)
+            else:
+                raise ValueError('key of "{}" is not known'.format(key))
+            
         except Exception as e:
             self.send_response(400)
             self.send_header('Content-Type','text/html')
             self.end_headers()
             self.wfile.write(bytes(USE_MESSAGE, 'utf8'))
             return
-
-        
-        ec = Transmitter(pin_num)    
-        ec.transmit_action(address_num, unit_num, action)
 
         # Send response status code
         self.send_response(200)
@@ -142,10 +145,6 @@ class Simple_RequestHandler(BaseHTTPRequestHandler):
 
         result = {}
         result['status'] = 200
-        result['pin'] = pin_num
-        result['address'] = address_num
-        result['unit'] = unit_num
-        result['action'] = action
 
         self.wfile.write(bytes(json.dumps(result, indent=1), "utf8"))
         return
@@ -161,7 +160,7 @@ class Simple_RequestHandler(BaseHTTPRequestHandler):
  
 if '__main__' == __name__:
     parser = argparse.ArgumentParser(
-        description='REST server for Etekcity Outlet controller')
+        description='REST server for TOYDALOO RC dump truck controller')
     parser.add_argument('-v', '--verbose', 
                         help='increase output verbosity',
                         action='store_true'

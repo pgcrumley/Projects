@@ -24,10 +24,10 @@
 #
 
 [Unit]
-Description=Run REST server for Etekcity outlet controller
+Description=Run REST server for TOYDALOO RC dump truck controller
 
 [Service]
-ExecStart=/opt/Controllers/EtekcityOutlet/etekcity_rest_server.py
+ExecStart=/opt/Projects/TJBot_Drives/driver_rest_server.py
 
 [Install]
 WantedBy=multi-user.target
@@ -35,8 +35,8 @@ WantedBy=multi-user.target
 #
 # this file is installed in /lib/systemd/system
 # then run 
-#    'sudo systemctl enable etekcity_rest_server'
+#    'sudo systemctl enable driver_rest_server'
 # this makes the service start at boot time
 # then run 
-#    'sudo systemctl start etekcity_rest_server'
+#    'sudo systemctl start driver_rest_server'
 # this starts the service now
