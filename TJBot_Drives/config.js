@@ -17,5 +17,5 @@ exports.credentials.speech_to_text = {
         password: "sFmNgygTufe4"
 }
 
-exports.drive_server_address = 127.0.0.1; // by default use "localhost"
+exports.drive_server_address = "127.0.0.1"; // by default use "localhost"
 exports.drive_server_port = 9999;  // by default use IP port 9999

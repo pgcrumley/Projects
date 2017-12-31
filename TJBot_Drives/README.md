@@ -1,60 +1,41 @@
-# Etekcity Electric Outlet Controller
+# TJBot Drives!
 
-This software, when used with a
-[433 MHz transmitter](https://www.amazon.com/gp/product/B017AYH5G0),
-allows a Raspberry Pi to wirelessly control the
-[Etekcity Outlet Switch](https://www.amazon.com/gp/product/B00DQELHBS/) 
-devices.
+Sure, [TJBot](https://github.com/ibmtjbot/tjbot)
+can't walk but there are other ways to be mobile.
 
-In addition to the transmitter and device one also requires some 
-[jumper wires](https://www.amazon.com/gp/product/B01LZF1ZSZ/)
-to connect the parts.
+This project will give TJBot the ability to control an RC truck to
+provide mobility.  It uses an inexpensive RC vehicle because some hardware
+{hacking} will be required and one might not want to open the covers on
+an expense device.
 
-If you purchase the parts using the above links you will have 5 sets of
-transmitter / receiver boards (you only need one for the transmitter
-boards) and you will have lots or jumper wires (you only need 3 to 
-connect the transmitter to the Raspberry Pi and you may want to use an 
-additional wire as an antenna.
+A soldering iron and some basic electronic experience will help with this 
+project but with care this can be done as a first experience with both.
 
-The outlet switches are identified by two numbers.  First is a device
-address which ranges from 0 to 255.  All outlet switches in a single 
-package have the same address.
+#### Materials Needed:  
 
-While the devices in a package share an address, each device has a unique unit 
-number from 1 through 5.  With these two numbers software can use the
-transmitter to send signals to turn the outlet switches on and off.
+1. TJBot
+2. A suitable RC vehicle (ones that use two 1.5 volt batteries are preferred)
+3. Soldering iron and solder
+4. Several proto-board jumpers (one end will be cut off)
 
-This arrangement allows a Raspberry Pi to control powered devices without
-direct connections to hazardous voltages.
+Once you have the RC vehicle you will have a better understaning of what 
+else is needed to conenct it to the Raspberry Pi in the TJBot.
 
-Once the parts are available one should be able to
-a Raspberry Pi to a transmitter and configure
-the software to control the outlets in under an hour.  The steps include:
+## Construction
 
-* Install the software in the Raspberry Pi
-* Configure the software 
-* Plug in the outlet switches and make sure they work with the provided control.
-* Attach the transmitter to the Raspberry Pi.
-* Test the transmitter operation.
-* Determine the address for the outlet switches.
-* Use the controller command to turn devices on and off.
-* (optional) Configure REST server which allows control via browser or REST.
-* Enjoy!
-
-
-### Install the software in the Raspberry Pi (5 minutes)
+#### Install the software in the Raspberry Pi (5 minutes)
 
 The software and scripts assume the software is installed in `/opt`, a
 standard directory for "optional" software.  To install the software use
 
-    sudo sh -c 'cd /opt ; git clone https://github.com/pgcrumley/Controllers.git'
+    sudo sh -c 'cd /opt ; git clone https://github.com/pgcrumley/Projects.git'
 
 This will place a copy of the software in `/opt` and leave behind
 information that makes it easy to retrieve updates later if needed.
 
 Next 
 
-    cd /opt/Controllers/Etekcity/
+    cd /opt/Controllers/TJBot_Drives/
     
 and make sure there are
 a number of python and other scripts present.
@@ -84,83 +65,17 @@ Your console should look like this:
 The version numbers may vary but there should not be any messages after the
 `import RPi.GPIO` line.    
 
-### Plug in the outlet switches and make sure they work with the provided control. (5 minutes)
+#### Connect pigtails to the RC controller buttons (30 minutes)
 
-Unpack the outlet switches and install the battery in the included remote.
-Plug one or more of the outlet switches in to a wall outlet and make sure 
-the devices switch on and off when you use the remote control.
+This step will require soldering ability and you will void any warranty
+on the RC device.  If you need help with solding I would refer you to some 
+[soldering advice](http://www.instructables.com/id/How-to-Solder-Basic-Soldering-Guide/)
+for more information.
 
-When the outlet switch is "on" a red light will illuminate as shown below:
 
-![switch on image](./images/on.png)
 
-When the outlet switch is "off" the red light is also off as shown below:
 
-![switch off image](./images/off.png)
-
-It would be a good idea to plug a lamp or other electric device in to the 
-outlet switches to verify they operate correctly before proceeding.
-
-When you are sure the outlets all work correctly it is time to let the 
-Raspberry Pi control them.
-
-Leave the outlet switches plugged in to a receptacle so you are ready to
-determine the address and test them after the transmitter is attached to
-the Raspberry Pi.
-
-### Attach the transmitter to the Raspberry Pi. (10 minutes)
-
-Three wires connect the transmitter to the Raspberry Pi.  The wires are
-
-| Function | Color in picture | Raspberry Pi Pin Number | Pin Name |
-| ---- | ---- | ----- | ----- | 
-| 3.3 volt power | Orange | 17 | 3.3V PWR |
-| Signal | Blue | 18 | GPIO 24 |
-| Ground | Black | 20 | GND |
-
-You can choose different colors for the wires but be sure the correct
-pins are connected between the Raspberry Pi and the transmitter.
-
-Power down your Rapsberry Pi before making the connections with the GUI or 
-a command such as
-
-    sudo shutdown --poweroff now
-
-Wait a few second for the LED activity to stop then disconnect power from the
-Raspberry Pi.
-
-Connect the transmitter to the Raspbery Pi as shown:
-
-![Connections](./images/connections_2.png)
-
-Note that the pins on the connector start with 1 in the upper left position 
-and pin 2 is in the upper right location.  The pins in the next row down are
-3 and 4, then 5 and 6. This continues with the bottom left pin of 39 and the 
-bottom right pin of 40.  Older boards only have only 28 pins.
-
-An image of the pins with pin numbers and names is available
-[here](https://github.com/DotNetToscana/IoTHelpers/wiki/Raspberry-Pi-2-and-3-Pinout).
-
-Please note that many of the pins have names such as "GPIO 12" or "GPIO 17".
-The number in the GPIO name tells how the pins are used by the hardware.
-In this project we are using the 
-pin numbers (not names) and the numbers simply refer to
-the pins' location on the board, not what they do.  
-
-For this project we connect the `DATA` pin on the transmitter (yes, the 
-word `DATA` is written backwards on the transmitter board) to 
-pin number 18.  Pin 18 has a name of `GPIO 24`.  
-
-Check the connections twice to be sure before proceeding.
-
-Please be careful to not let the transmitter board come in contact with 
-the Raspberry Pi when the devices are powered.  There are voltages present
-on both cards which can cause damage if the voltages come in contact with 
-delicate parts.  It migth be a good idea to wrap the transmitter card with
-some tape or other non-conductive material (e.g. light cardboard, plastic 
-bag) to prevent damage.
-
-### Test the transmitter operation. (5 minutes)
+#### Test the transmitter operation. (5 minutes)
 
 Once the transmitter is connected power up your Raspberry Pi.  Login and 
 return to `/opt/Controllers/Etekcity` 
@@ -210,7 +125,7 @@ To make sure you have the right address try the command with that address for
 both the `first_address` and the `last_address` to make sure the 
 device responds.
 
-### Use the controller command to turn devices on and off. (2 minutes)
+#### Use the controller command to turn devices on and off. (2 minutes)
 
 You can control devices with the the `etekcity_controller.py` command.
 This command takes 4 parameters of the `transmitter pin`, 
@@ -227,7 +142,7 @@ You can control the devices with commands called from other programs or
 scripts.  If you want more flexibility you can run a REST server which allows
 the devices to be controlled by a wide range of programs and commands. 
 
-### (optional) Configure REST server which allows control via browser or REST. (5 minutes)
+#### (optional) Configure REST server which allows control via browser or REST. (5 minutes)
 
 If you want to use the REST server to control the devices you can have 
 that server configured to start automatically each time the system is 
@@ -280,7 +195,7 @@ the same host but you can change the way the server is started by altering the
 can send a REST command.  To do this add `--network_address 0.0.0.0`
 to the end of the command and restart.
 
-### Enjoy! 
+#### Enjoy! 
 
 
 

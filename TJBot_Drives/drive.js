@@ -46,6 +46,12 @@ var hardware = ['led', 'servo', 'microphone'];
 var tjConfig = {
     log: {
         level: 'info'  // change to 'verbose' for more details
+    },
+    listen: {
+        inactivityTimeout: 60 // close connection after 60 seconds of silence
+    },
+    wave: {
+        servoPin: 18 // corresponds to BCM 18 / physical PIN 12
     }
 };
 var tj = new TJBot(hardware, tjConfig, credentials);

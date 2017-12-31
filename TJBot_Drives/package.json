@@ -1,0 +1,21 @@
+{
+  "name": "tjbot_drives",
+  "version": "0.0.1",
+  "description": "TJBot can drive",
+  "main": "drive.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "tjbot": "latest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pgcrumley/Projects/tree/master/TJBot_Drives"
+  },
+  "keywords": [
+    "TJBot", "tjbot"
+  ],
+  "author": "pgcrumley@gmail.com",
+  "license": "MIT"
+}
