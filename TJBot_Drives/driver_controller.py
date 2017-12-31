@@ -316,21 +316,25 @@ if '__main__' == __name__ :
     """
     Simple command to drive.
     """
+
+    controller = Controller()
+
     ## normal case
-    if 3 != len(sys.argv):
+    if 0 == len(sys.argv):
+        ops =[('forward', 1), ('left', 1),
+              ('forward', 1), ('left', 1),
+              ('forward', 1), ('left', 1),
+              ('forward', 1), ('left', 1)
+              ]
+        controller.drive_ops(ops)        
+    elif 3 == len(sys.argv):
+        op = sys.argv[1]
+        duration = float(sys.argv[2])
+        controller.drive_one_op(op, duration)
+    else:
         print('len(sys.argv) is {}'.format(len(sys.argv)), file=sys.stderr)
         usage()
 
-    op = sys.argv[1]
-    duration = float(sys.argv[2])
-
-    if DEBUG:
-        print('op:        "{}"'.format(op), file=sys.stderr)
-        print('duration:  {}'.format(duration), file=sys.stderr)
-    
-    controller = Controller()
-    controller.drive_one_op(op, duration)
-    
     controller.close()
 
     # end of driver_controller.py
