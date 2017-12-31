@@ -129,7 +129,9 @@ class Controller:
         """
         Mark controller as dead, turn off motors, and release resources.
         """
-        
+        if DEBUG:
+            print('entering close:', file=sys.stderr)
+            
         self.__alive = False
         # turn off all motor signals
         self.set_motor_signals(False, False, False, False)
@@ -140,6 +142,9 @@ class Controller:
         self._LEFT_BACKWARD_PIN = None
         # let other processes use the GPIO pins
         GPIO.cleanup()
+
+        if DEBUG:
+            print('leaving close:', file=sys.stderr)
             
     def set_motor_signals(self, rf, rb, lf, lb):
         """
@@ -147,7 +152,7 @@ class Controller:
         rf, rb, lf, lb are right forward / backward and left forward / backward
         """
         if DEBUG:
-            print('entering __transmit:',
+            print('entering set_motor_signals:',
                   file=sys.stderr)
             print('  rf, rb, lf, lb:  {} {} {} {}'.format(rf, rb, lf, lb),
                   file=sys.stderr)
@@ -171,7 +176,7 @@ class Controller:
             GPIO.output(self._LEFT_BACKWARD_PIN, GPIO.HIGH)
         
         if DEBUG:
-            print('leaving __transmit:',
+            print('leaving set_motor_signals:',
                   file=sys.stderr)
 
 
@@ -237,11 +242,9 @@ class Controller:
     
 def usage():
     print('usage:  driver_controller.py op speed, duration',
-          file=sys.stderr)    
+          file=sys.stderr)
     print('          op is "forward", "backward", "right", "left", "cw", "ccw"',
-          file=sys.stderr)    
-    print('          speed is an integer between 1 and 10 inclusive',
-          file=sys.stderr)    
+          file=sys.stderr)
     print('          duration is time for operation in seconds',
           file=sys.stderr)    
     exit(1)
@@ -262,11 +265,10 @@ if '__main__' == __name__ :
 
     if DEBUG:
         print('op:        "{}"'.format(op), file=sys.stderr)
-        print('speed:     {}'.format(speed), file=sys.stderr)
         print('duration:  {}'.format(duration), file=sys.stderr)
     
     controller = Controller()
-    controller.drive(op, speed, duration)
+    controller.drive(op, duration)
     
     controller.close()
     
