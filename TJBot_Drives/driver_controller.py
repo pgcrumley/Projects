@@ -322,9 +322,8 @@ if '__main__' == __name__ :
     ## normal case
     if 1 == len(sys.argv):
         ops =[('forward', 1), ('left', 1),
-              ('forward', 1), ('left', 1),
-              ('forward', 1), ('left', 1),
-              ('forward', 1), ('left', 1)
+              ('cw', 2), ('ccw', 2),
+              ('backward', 1), ('right', 1)
               ]
         controller.drive_ops(ops)
     elif 3 == len(sys.argv):
