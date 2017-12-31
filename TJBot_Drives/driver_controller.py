@@ -53,7 +53,7 @@ import sys
 import time
 import RPi.GPIO as GPIO
 
-DEBUG = True
+DEBUG = False
 
 class Controller:
     """
