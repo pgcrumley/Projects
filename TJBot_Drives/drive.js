@@ -47,7 +47,9 @@ var tjConfig = {
     log: {
         level: 'info'  // change to 'verbose' for more details
     },
-    listen: {
+    listen: {  // annoying the microphoneDeviceId & language must be given
+        microphoneDeviceId: 'plughw:1,0',
+        language: 'en-US',
         inactivityTimeout: 60 // close connection after 60 seconds of silence
     },
     wave: {
