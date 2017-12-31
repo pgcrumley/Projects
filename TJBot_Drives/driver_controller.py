@@ -150,7 +150,7 @@ class Controller:
             
         self.__alive = False
         # turn off all motor signals
-        self.halt_motors()
+        self._set_motor_signals(False, False, False, False)
         # make sure we can't set signals anymore
         self._RIGHT_FORWARD_PIN = None
         self._RIGHT_BACKWARD_PIN = None
