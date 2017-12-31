@@ -39,11 +39,14 @@ Operation  L motor  R motor  Description
 
 
 The basic control operation is:
-  drive(op, time_in_seconds)
-    where op is "idle", "forward", "backward", "left", "right", "cw", or "ccw"
-    time_in_seconds is how long to do the operation
-    
+  drive(op)
+    where op is "idle", "forward", "backward", "left", "right", "cw", or "ccw".
     "op" values are recognized for any case of the parameter, e.g. "CW" or "cw"
+
+Other functions include:
+  halt() # stop the motors
+  drive_one_op(op, time_in_seconds)  # one op for limited time then halt
+  drive_ops([(op, time_in_seconds), ...]) # list of op/time then halt
 """
 
 import sys
@@ -63,6 +66,19 @@ class Controller:
                    21, 22, 23, 24, 26, 29, 
                    31, 32, 33, 35, 36, 37, 38, 40]
 
+    # signals are Right Forward, Right Backward, Left Forward, Left Backward
+    _OP_TO_SIGNALS = {'idle' : (False, False, False, False), 
+                      'stop' : (False, False, False, False), 
+                      'halt' : (False, False, False, False),
+                      'forward' : (True, False, True, False), 
+                      'backward' : (False, True, False, True),
+                      'right' : (False, False, True, False),
+                      'left' : (True, False, False, False),
+                      'cw' : (False, True, True, False),
+                      'ccw' : (True, False, False, True)
+                      }
+    
+    
     def __init__(self, 
                  right_forward_pin = 24,
                  right_backward_pin = 26,
@@ -134,7 +150,7 @@ class Controller:
             
         self.__alive = False
         # turn off all motor signals
-        self.set_motor_signals(False, False, False, False)
+        self.halt_motors()
         # make sure we can't set signals anymore
         self._RIGHT_FORWARD_PIN = None
         self._RIGHT_BACKWARD_PIN = None
@@ -146,18 +162,18 @@ class Controller:
         if DEBUG:
             print('leaving close:', file=sys.stderr)
             
-    def set_motor_signals(self, rf, rb, lf, lb):
+    def _set_motor_signals(self, rf, rb, lf, lb):
         """
         Transmit a signal for the given motor pattern.
         rf, rb, lf, lb are right forward / backward and left forward / backward
         """
         if DEBUG:
-            print('entering set_motor_signals:',
+            print('entering _set_motor_signals:',
                   file=sys.stderr)
             print('  rf, rb, lf, lb:  {} {} {} {}'.format(rf, rb, lf, lb),
                   file=sys.stderr)
         
-        # set appropriate pins LOW
+        # set appropriate signals
         if rf:
             GPIO.output(self._RIGHT_FORWARD_PIN, GPIO.LOW)
         else:
@@ -176,65 +192,112 @@ class Controller:
             GPIO.output(self._LEFT_BACKWARD_PIN, GPIO.HIGH)
         
         if DEBUG:
-            print('leaving set_motor_signals:',
+            print('leaving _set_motor_signals:',
                   file=sys.stderr)
 
-
-    def drive(self, op, time_in_seconds):
+    def halt_motors(self):
         """
-        Send the proper signals on the GPIO pins 
+        Transmit signals which turns off all motors
+        """
+        if not self.__alive:
+            raise RuntimeError('Controller has been closed')
+        
+        if DEBUG:
+            print('entering halt_motors:', file=sys.stderr)
+        
+        # set appropriate pins HIGH to turn off motors
+        self._set_motor_signals(False, False, False, False)
+        
+        if DEBUG:
+            print('leaving halt_motors:', file=sys.stderr)
 
-        op is "idle", "forward", "backward", "left", "right", "cw", or "ccw"
-        time_in_seconds is how long to do the operation
-    
+    def drive(self, op):
+        """
+        Send the proper signals on the GPIO pins.
+        
+        The signals retain their values till some other command is sent.
+
+        op is a key in the _OP_TO_SIGNALS map.
         "op" values are recognized for any case of the parameter.
         """
-
-        if DEBUG:
-            print('entering drive:',
-                  file=sys.stderr)
-            print('  op =              "{}"'.format(op), file=sys.stderr)
-            print('  time_in_seconds = {}'.format(time_in_seconds),
-                  file=sys.stderr)
-        
         if not self.__alive:
             raise RuntimeError('Controller has been closed')
         
         # ignore case of op parameter
         lc_op = op.lower()
         
+        if DEBUG:
+            print('entering drive:', file=sys.stderr)
+            print('  op =    "{}"'.format(op), file=sys.stderr)
+            print('  lc_op = "{}"'.format(op), file=sys.stderr)
+        
+        # now send the appropriate signals
+        s = Controller._OP_TO_SIGNALS[lc_op]
+        self._set_motor_signals(s[0], s[1], s[2], s[3])
+
+        if DEBUG:
+            print('leaving drive:',
+                  file=sys.stderr)
+
+    def drive_one_op(self, op, time_in_seconds):
+        """
+        Send the proper signals on the GPIO pins for the indicated time then
+        stop all the motors.
+
+        op is "idle", "forward", "backward", "left", "right", "cw", or "ccw".
+        "op" values are recognized for any case of the parameter.
+
+        time_in_seconds is how long to do the operation.
+        """
+        if not self.__alive:
+            raise RuntimeError('Controller has been closed')
+        
+        if DEBUG:
+            print('entering drive_one_op:', file=sys.stderr)
+            print('  op =              "{}"'.format(op), file=sys.stderr)
+            print('  time_in_seconds = {}'.format(time_in_seconds),
+                  file=sys.stderr)
+        
         # special case for 0 time_in_seconds
         if (time_in_seconds <= 0):
             return
 
         try:
-            # now send the appropriate signals
-            if 'forward' == lc_op:
-                self.set_motor_signals(True, False, True, False)
-            elif 'backward' == lc_op:
-                self.set_motor_signals(False, True, False, True)
-            elif 'right' == lc_op:
-                self.set_motor_signals(False, False, True, False)
-            elif 'left' == lc_op:
-                self.set_motor_signals(True, False, False, False)
-            elif 'cw' == lc_op:
-                self.set_motor_signals(False, True, True, False)
-            elif 'ccw' == lc_op:
-                self.set_motor_signals(True, False, False, True)
-            elif 'idle' == lc_op:
-                self.set_motor_signals(False, False, False, False)
-            else:
-                raise ValueError('op of "{}" is not defined'.format(op))
-    
+            self.drive(op)
             # drive for indicated amount of time
             time.sleep(time_in_seconds)
         finally:
             # always turn off motors
-            self.set_motor_signals(False, False, False, False)
+            self.halt_motors()
 
         if DEBUG:
-            print('leaving drive:',
-                  file=sys.stderr)
+            print('leaving drive_one_op:', file=sys.stderr)
+
+    def drive_ops(self, ops):
+        """
+        For each tuple of (op, time_in_seconds) in the list of ops, 
+        send the proper signals on the GPIO pins for the indicate
+        time_in_seconds then turn off all motors when the list is exhausted.
+
+        ops is a list of (op, time_in_seconds) where each op is a key 
+        in Controllers._OPS_TO_SIGNALS.
+        """
+        if not self.__alive:
+            raise RuntimeError('Controller has been closed')
+        
+        if DEBUG:
+            print('entering drive_ops:', file=sys.stderr)
+            print('  ops = {}'.format(ops), file=sys.stderr)
+        
+        try:
+            for op,how_long in ops:
+                self.drive_one_op(op, how_long)
+        finally:
+            # always turn off motors
+            self.halt_motors()
+
+        if DEBUG:
+            print('leaving drive_ops:', file=sys.stderr)
 
     #
     # end of class Controller        
@@ -253,22 +316,22 @@ if '__main__' == __name__ :
     """
     Simple command to drive.
     """
-    
     ## normal case
-    if 4 != len(sys.argv):
+    if 3 != len(sys.argv):
         print('len(sys.argv) is {}'.format(len(sys.argv)), file=sys.stderr)
         usage()
 
     op = sys.argv[1]
-    speed = int(sys.argv[2])
-    duration = float(sys.argv[3])
+    duration = float(sys.argv[2])
 
     if DEBUG:
         print('op:        "{}"'.format(op), file=sys.stderr)
         print('duration:  {}'.format(duration), file=sys.stderr)
     
     controller = Controller()
-    controller.drive(op, duration)
+    controller.drive_one_op(op, duration)
     
     controller.close()
+
+    # end of driver_controller.py
     
