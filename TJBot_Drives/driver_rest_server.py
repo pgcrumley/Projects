@@ -119,7 +119,7 @@ class Simple_RequestHandler(BaseHTTPRequestHandler):
         try:
             keys = data.keys()
             if DEBUG:
-                print('key:     {}'.format(key), file=sys.stderr)
+                print('keys:     {}'.format(keys), file=sys.stderr)
             if 'drive' in keys:
                 op = data['drive']
                 CONTROLLER.drive(op)
