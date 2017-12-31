@@ -117,17 +117,17 @@ class Simple_RequestHandler(BaseHTTPRequestHandler):
             print('post data: "{}"'.format(data), file=sys.stderr)
 
         try:
-            key = date.getkey()
+            keys = data.keys()
             if DEBUG:
                 print('key:     {}'.format(key), file=sys.stderr)
-            if 'drive' == key:
-                op = data[key]
+            if 'drive' in keys:
+                op = data['drive']
                 CONTROLLER.drive(op)
-            elif 'drive_ops' == key:
-                ops_list = data[key]
+            elif 'drive_ops' in keys:
+                ops_list = data['drive_ops']
                 CONTROLLER.drive_ops(ops_list)
             else:
-                raise ValueError('key of "{}" is not known'.format(key))
+                raise ValueError('keys of "{}" not known'.format(keys))
             
         except Exception as e:
             self.send_response(400)
