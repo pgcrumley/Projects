@@ -139,6 +139,17 @@ Raspberry Pi voltage supplies.
 Depending on the length of pigtail you used, it might be easier to extend
 the pigtails with some Male - Female proto-board jumper wires.
 
+Note:  For this project the servo motor data connection will move 
+from Raspberry Pi GPIO 7 on board pin 26 to GPIO 12 on board pin 32.
+
+This is needed because the 4 signal pins needed for the vehicle should all
+be in the HIGH state when the Raspbery Pi is first turned on so the  
+vehicle is stationary.  Few pins are in the HIGH state when power is applied
+and the original servo pin is one of those special pins.  We move to a new
+pin to accomodate this need.
+
+Code in the node program will tell TJBot about the new location of the 
+servo signal.
 Start by connecting just the 3.3 volt power and ground pigtails to the 
 Raspberry Pi.  I would recommend using Raspberry Pi pins 17 and 25.  Please
 note these are board numbers, not GPIO numbers.
