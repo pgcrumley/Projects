@@ -134,7 +134,7 @@ no problem for the Raspberry Pi.
 Remove the batteries so you do not have the batteries competing with the 
 Raspberry Pi voltage supplies.
 
-#### Attach the pigtails and test the transmitter operation. (5 minutes)
+#### Attach the pigtails and test the transmitter operation. (45 minutes)
 
 Depending on the length of pigtail you used, it might be easier to extend
 the pigtails with some Male - Female proto-board jumper wires.
@@ -160,7 +160,27 @@ The signal to pin connections are:
 
 #### Use the controller command to turn devices on and off. (2 minutes)
 
-TBD
+Run the driver_controller program to make sure the pigtails are connected 
+properly.  Make sure the vehicle has plenty of space to drive and run
+
+    sudo driver_controller.py
+    
+By default this command will drive:
+
+1. forward for 1 second
+2. left for 1 second
+3. clockwise for 2 seconds
+4. counter-clockwise for 2 seconds
+5. backward for 1 second
+6. right for 1 second 
+
+You can use this program to control the vehicle.  
+
+    sudo driver_controller.py --help
+    
+gives more details.
+
+Once you have this working you are ready to have TJBot drive.
 
 #### Configure REST server which allows control via REST. (5 minutes)
 
