@@ -15,12 +15,20 @@ an expense device.
 A soldering iron and some basic electronic experience will help with this 
 project but with care this can be done as a first experience with both.
 
+For this project a wireless headset is recommended rather than the
+simple USB microphone as noise from the vehicle can interfere with the 
+voice commends.  In the video below a wireless headset was used. 
+
+You can also use a wired headset if you don't mind having to stay close to 
+the vehicle.
+
 #### Materials Needed:  
 
 1. TJBot
 2. A suitable RC vehicle (ones that use two 1.5 volt batteries are preferred)
 3. Soldering iron and solder
 4. Several proto-board jumpers (one end will be cut off)
+5. Wireless headset (rather than simple USB microphone)
 
 Once you have the RC vehicle you can look inside the controller to gain
 a better understanding of what 
@@ -210,7 +218,11 @@ of the REST server which sends appropriate signals to the RC transmitter.
     exports.drive_server_port = 9999;  // by default use IP port 9999
     
 
-Run `npm install` to prepare the node.js environment.  This will take
+Run 
+
+    sudo npm install
+    
+to prepare the node.js environment.  This will take
 some time.
 
 #### Run the program
@@ -218,7 +230,7 @@ some time.
 Now it is time to put your TJBot to work controlling devices.  Start the
 program with
 
-    node drive.js
+    sudo node drive.js
 
 After a few seconds TJBot will be ready for a command.  
 The program is listening for drive commands of "forward", "backward", "stop",
