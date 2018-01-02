@@ -1,11 +1,15 @@
 # TJBot Drives!
 
+[TJBot in the driver seat](images/TJBot_drives.png)
+
 Sure, [TJBot](https://github.com/ibmtjbot/tjbot)
 can't walk but there are other ways to be mobile.
 
+[![TJBot drives](https://img.youtube.com/vi/AAlcMZAQDOI/0.jpg)](https://www.youtube.com/watch?v=AAlcMZAQDOI "TJBot drives")
+
 This project will give TJBot the ability to control an RC truck to
-provide mobility.  It uses an inexpensive RC vehicle because some hardware
-{hacking} will be required and one might not want to open the covers on
+provide mobility.  It uses an inexpensive RC vehicle as some hardware
+modifications are required and one might not want to open the covers on
 an expense device.
 
 A soldering iron and some basic electronic experience will help with this 
@@ -18,8 +22,9 @@ project but with care this can be done as a first experience with both.
 3. Soldering iron and solder
 4. Several proto-board jumpers (one end will be cut off)
 
-Once you have the RC vehicle you will have a better understaning of what 
-else is needed to conenct it to the Raspberry Pi in the TJBot.
+Once you have the RC vehicle you can look inside the controller to gain
+a better understanding of what 
+else is needed to connect it to the Raspberry Pi in the TJBot.
 
 ## Construction
 
@@ -35,7 +40,7 @@ information that makes it easy to retrieve updates later if needed.
 
 Next 
 
-    cd /opt/Controllers/TJBot_Drives/
+    cd /opt/Projects/TJBot_Drives/
     
 and make sure there are
 a number of python and other scripts present.
@@ -68,122 +73,108 @@ The version numbers may vary but there should not be any messages after the
 #### Connect pigtails to the RC controller buttons (30 minutes)
 
 This step will require soldering ability and you will void any warranty
-on the RC device.  If you need help with solding I would refer you to some 
+on the RC device.  If you need help with soldering I would refer you to some 
 [soldering advice](http://www.instructables.com/id/How-to-Solder-Basic-Soldering-Guide/)
 for more information.
 
+Many of the simple controllers will use buttons or switches in the controller
+which connect a signal to ground in order to activate a particular function.
+The controller for the vehicle used here has 4 switches for the functions of:
 
+1. Right-side Forward
+2. Left-side Forward
+3. Right-side Backward
+4. Left-side Backward
 
+With a bit of inspection you should be able to find where to attach to the 
+transmitter board if you use a different vehicle.
+
+Pigtails are connected to each of these signals so they can be pulled low by
+the Raspberry Pi.  We will also connect a pigtail to ground and power so the 
+transmitter is powered by the Raspberry Pi rather than by batteries.
+
+The first thing to do is prepare the pigtails so it is easy to attach 
+them to the board in the RC transmitter.  Cut off one end and expose a short
+amount of the wire inside (about 2 mm).  Apply solder to the end of the wire
+so it is ready to attach with just heat.
+
+[Preparing the pigtails](images/preparing_pigtail.png)
+
+For this project the pigtails look like this:  (there will also be a pigtail
+attached to the positive battery terminal)
+
+[pigtails attached](images/attaching_pigtails.png)
+
+Cut a slot for the pigtails to come out of the case.  The result should look 
+something like this:
+
+[pigtails leaving case](images/controller_with_pigtails.png)
+
+Once the pigtails are outside of the case it would be good to put batteries 
+in the controller to make voltage and current measurements of the pins to 
+ensure the voltage will not be larger than 3.3 volts and the current when the
+signal is connected to ground is lower than the capabilities of the
+Raspberry Pi.
+
+Here we see the voltage is under 3.3 volts (as we expected since this is 
+powered by two 1.5 volt batteries) and the current is about 2.8 mA which is
+no problem for the Raspberry Pi.
+
+[voltage measurements](images/checking_voltage.png)
+[current measurements](images/checking_current.png)
+
+Remove the batteries so you do not have the batteries competing with the 
+Raspberry Pi voltage supplies.
 
 #### Test the transmitter operation. (5 minutes)
 
-Once the transmitter is connected power up your Raspberry Pi.  Login and 
-return to `/opt/Controllers/Etekcity` 
-with `cd /opt/Controllers/Etekcity`
-
-Make sure the transmistter works by running the command:
-
-    sudo ./etekcity_all_on.py
-
-All the outlet switches should turn on and the LEDs should be glowing red.
-
-If the switches do not turn on insert a jumper wire in to the hole on the 
-transmitter board labelled `ANT` as shown in 
-[this photo](./images/antenna.png).  The wire will provide more strength
-to the transmitted signal improving the reliability and distance between
-the transmitter and the devices.
-
-    sudo ./etekcity_all_off.py
-
-will turn all the devices off.
-
-If the devices do not turn on and off with these commands check all the 
-wiring.  If the wires look correct swap in one of the 4 other transmitter
-boards and try again.
-
-Turn off all the devices before proceeding.
-
-### Determine the address for the outlet switches. (5 minutes)
-
-This next command will cycle through all the addresses trying to turn each
-device on then off before proceeding to the next address.
-
-`sudo ./etekcity_try_addrs.py`
-
-Watch the screen so you see the address that turned the devices on then off.
-
-Please note that address 85 with unit 3 is special and will be skipped.
-
-If you miss the exact address on which the devices respond you can run the 
-command with parameters to set the first and last address to try.  Setting the 
-start and end address also slows down the process so you have more time to 
-see which address works for your devices.
-
-    sudo ./etekcity_try_addrs.py [first_address last_address]
-
-To make sure you have the right address try the command with that address for
-both the `first_address` and the `last_address` to make sure the 
-device responds.
+TBD
 
 #### Use the controller command to turn devices on and off. (2 minutes)
 
-You can control devices with the the `etekcity_controller.py` command.
-This command takes 4 parameters of the `transmitter pin`, 
-`address`, `unit`, and `on` | `off`
+TBD
 
-This requires root authority so the program can control the hardware pins.
-An example of a command to turn on a device is
+#### Configure REST server which allows control via REST. (5 minutes)
 
-    sudo ./etekcity_controller.py 18 21 2 on
-
-which will turn on the device with an address of 21 and a unit number of 2.
-
-You can control the devices with commands called from other programs or 
-scripts.  If you want more flexibility you can run a REST server which allows
-the devices to be controlled by a wide range of programs and commands. 
-
-#### (optional) Configure REST server which allows control via browser or REST. (5 minutes)
-
-If you want to use the REST server to control the devices you can have 
+The TJBot program uses a REST server to control the vehicle.  TO have 
 that server configured to start automatically each time the system is 
 started.
 
+As root:
+
+    cd /opt/Projects/TJBot_Drives
+    
 To do this a configuration file is copied to the `/lib/systemd/system`
 directory then the service is enabled to start automatically.  You can 
 also start the service immediately without rebooting the system.
 
 To set up the facility use
 
-    sudo cp etekcity_rest_server.service /lib/systemd/system
-    sudo systemctl enable etekcity_rest_server.service
+    cp tjbot_rest_server.service /lib/systemd/system
+    systemctl enable driver_rest_server
 
 You can start the service without rebooting by typing 
 
-    sudo systemctl start etekcity_rest_server.service
+    systemctl start driver_rest_server
 
 Finally, you can check the status of the service with 
 
-    sudo systemctl status -l etekcity_rest_server.service
+    systemctl status driver_rest_server
     
 This last command should provide out similar to 
 
-    o etekcity_rest_server.service - Run REST server for Etekcity outlet controller
-       Loaded: loaded (/lib/systemd/system/etekcity_rest_server.service; enabled)
-       Active: active (running) since Thu 2017-12-07 22:41:08 EST; 8s ago
-     Main PID: 2438 (python3)
-       CGroup: /system.slice/etekcity_rest_server.service
-               \- 2438 python3 /opt/Controllers/EtekcityOutlet/etekcity_rest_server.py
-    
-    Dec 07 22:41:08 rpi-214 systemd[1|: Started Run REST server for Etekcity outlet controller.
+    o  driver_rest_server.service - Run REST server for TOYDALOO RC dump truck controller
+        Loaded: loaded (/lib/systemd/system/driver_rest_server.service; enabled; vendor preset: enabled)
+        Active: active (running) since Mon 2018-01-01 22:31:22 EST; 4min 57s ago
+      Main PID: 1245 (python3)
+        CGroup: /system.slice/driver_rest_server.service
+                \-1245 python3 /opt/Projects/TJBot_Drives/driver_rest_server.py
 
-You can now control one of the devices with this command
+    Jan 01 22:31:22 tjbot systemd[1]: Started Run REST server for TOYDALOO RC dump truck controller.
 
-    curl -H 'Content-Type: application/json' -X POST -d '{"address":21,  "unit":2, "action": "on"}'  http://localhost:11111/
+You can now make the vehicle spin clock-wise with this command:
 
-The above command turns on the device with unit number of 2 at address 21.  
-Use the address you determined above and select a unit number between 
-1 and 5 for the device you want to control.  Change "on" to "off" to turn the
-device off.
+    curl -H 'Content-Type: application/json' -X POST -d '{"drive_ops" : [ ["cw", 1] ]}'  http://localhost:9999/
 
 Notice the above command does not need the `sudo` command.  You do not need
 root access to send the REST commands to the server.  This allows many
@@ -195,7 +186,50 @@ the same host but you can change the way the server is started by altering the
 can send a REST command.  To do this add `--network_address 0.0.0.0`
 to the end of the command and restart.
 
+#### Prepare the node.js environment
+
+Create a config.js file which holds your IBM Bluemix credintials for
+the speech-to-text function.  This can be the same file as you used with 
+the speech-to-text project in the normal TJBot recipe.
+
+In addition to the credential information you need to add two additional
+pieces of information to the config.js file which give the IP address 
+of the REST server which sends appropriate signals to the RC transmitter.
+
+    // Create the credentials object for export
+    exports.credentials = {};
+
+    // Watson Speech to Text
+    // https://www.ibm.com/watson/developercloud/speech-to-text.html
+    exports.credentials.speech_to_text = {
+        username: 'xxxxxxxxxxxxxxxxxx',
+        password: 'xxxxxxxx'
+    }
+    
+    exports.drive_server_address = "127.0.0.1"; // by default use "localhost"
+    exports.drive_server_port = 9999;  // by default use IP port 9999
+    
+
+Run `npm install` to prepare the node.js environment.  This will take
+some time.
+
+#### Run the program
+
+Now it is time to put your TJBot to work controlling devices.  Start the
+program with
+
+    node drive.js
+
+After a few seconds TJBot will be ready for a command.  
+The program is listening for drive commands of "forward", "backward", "stop",
+"right", "left", "clock-wise", "counter-clock-wise". 
+
 #### Enjoy! 
+
+#### If you have trouble
+
+If you have trouble with this project, first make sure the RC controller is
+able to control the vehicle.  After that make sure the REST server is running.
 
 
 

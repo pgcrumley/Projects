@@ -39,16 +39,16 @@ device runs with that op till a new op is received.
 Both forms of request are sent as a map.  
 
 Form 1:
-    { "drive_ops" : [ ("op1", time1), ("op2", time2), ... ] }
+    { "drive_ops" : [ ["op1", time1], ["op2", time2], ... ] }
 Form 2:
     { "drive" : "op" }
 
 
 try a curl command such as:
   curl -H 'Content-Type: application/json' -X POST -d '{"drive_ops": 
-    [("forward", 2)", ("left", 0.5), ("backward", 1)]}'  http://localhost:9999/
+    [ ["forward", 2], ["left", 0.5], ["backward", 1] ]}'  http://localhost:9999/
 
-The server must run as root to have access to the GPIO pins.
+This server must run as root to have access to the GPIO pins.
 """
 
 import argparse
