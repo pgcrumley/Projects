@@ -13,8 +13,8 @@ exports.credentials = {};
 // https://www.ibm.com/watson/developercloud/speech-to-text.html
 exports.credentials.speech_to_text = {
         url: "https://stream.watsonplatform.net/speech-to-text/api",
-        username: "1068d827-f330-4c30-8f18-580bb28e342c",
-        password: "sFmNgygTufe4"
+        username: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        password: "xxxxxxxxxxxx"
 }
 
 exports.drive_server_address = "127.0.0.1"; // by default use "localhost"
