@@ -28,7 +28,7 @@ the vehicle.
 2. A suitable RC vehicle (ones that use two 1.5 volt batteries are preferred)
 3. Soldering iron and solder
 4. Several proto-board jumpers (one end will be cut off)
-5. Wireless headset (rather than simple USB microphone)
+5. Wireless headset (suggested, rather than simple USB microphone)
 
 Once you have the RC vehicle you can look inside the controller to gain
 a better understanding of what 
@@ -134,9 +134,29 @@ no problem for the Raspberry Pi.
 Remove the batteries so you do not have the batteries competing with the 
 Raspberry Pi voltage supplies.
 
-#### Test the transmitter operation. (5 minutes)
+#### Attach the pigtails and test the transmitter operation. (5 minutes)
 
-TBD
+Depending on the length of pigtail you used, it might be easier to extend
+the pigtails with some Male - Female proto-board jumper wires.
+
+Start by connecting just the 3.3 volt power and ground pigtails to the 
+Raspberry Pi.  I would recommend using Raspberry Pi pins 17 and 25.  Please
+note these are board numbers, not GPIO numbers.
+
+With the RC transmitter powered from the Raspberry Pi make sure the normal
+controls still properly operate the vehicle.  Once you are sure the 
+transmitter still works correctly is it time to attach the pigtails for the 
+other signals.
+
+The signal to pin connections are:
+
+
+| Signal | Board Pin |
+| ------ | ------ |
+| Right-Forward | 24 |
+| Right-Backward | 26 |
+| Left-Forward | 29 |
+| Left-Backward | 31 |
 
 #### Use the controller command to turn devices on and off. (2 minutes)
 
