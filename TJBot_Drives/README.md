@@ -1,6 +1,6 @@
 # TJBot Drives!
 
-[TJBot in the driver seat](images/TJBot_drives.png)
+[!TJBot in the driver seat](images/TJBot_drives.png)
 
 Sure, [TJBot](https://github.com/ibmtjbot/tjbot)
 can't walk but there are other ways to be mobile.
@@ -98,17 +98,17 @@ them to the board in the RC transmitter.  Cut off one end and expose a short
 amount of the wire inside (about 2 mm).  Apply solder to the end of the wire
 so it is ready to attach with just heat.
 
-[Preparing the pigtails](images/preparing_pigtail.png)
+[!Preparing the pigtails](images/preparing_pigtail.png)
 
 For this project the pigtails look like this:  (there will also be a pigtail
 attached to the positive battery terminal)
 
-[pigtails attached](images/attaching_pigtails.png)
+[!pigtails attached](images/attaching_pigtails.png)
 
 Cut a slot for the pigtails to come out of the case.  The result should look 
 something like this:
 
-[pigtails leaving case](images/controller_with_pigtails.png)
+[!pigtails leaving case](images/controller_with_pigtails.png)
 
 Once the pigtails are outside of the case it would be good to put batteries 
 in the controller to make voltage and current measurements of the pins to 
@@ -120,8 +120,8 @@ Here we see the voltage is under 3.3 volts (as we expected since this is
 powered by two 1.5 volt batteries) and the current is about 2.8 mA which is
 no problem for the Raspberry Pi.
 
-[voltage measurements](images/checking_voltage.png)
-[current measurements](images/checking_current.png)
+[!voltage measurements](images/checking_voltage.png)
+[!current measurements](images/checking_current.png)
 
 Remove the batteries so you do not have the batteries competing with the 
 Raspberry Pi voltage supplies.
