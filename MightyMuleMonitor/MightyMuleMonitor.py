@@ -145,57 +145,64 @@ if __name__ == "__main__":
 
             # if controller is None we'll try to re-connect
             if controller is None:
-                # get serial port access for each serial device
-                controller = serial.Serial(given_port, 
-                                           PORT_SPEED, 
-                                           timeout=TIMEOUT_IN_SEC)
-                # give Arduino time to reset after serial open causes a reset
-                time.sleep(RESET_TIME_IN_SEC)  
-                v='<TBD>'
                 try:
-                    controller.write(READ_VERSION_COMMAND)
-                    controller.flush()
-                    v = controller.readline().decode('UTF-8').strip()
-                except:
-                    v = None
-                    raise RuntimeError('invalid version of "{}" received from device'.format(v))
-                if DEBUG:
-                    print('created SerialArduinoGpioController for "{}"'.format(given_port),
-                          file=sys.stderr, flush=True)
-                    print('found version of {}'.format(v),
-                          file=sys.stderr, flush=True)
-
-                emit_event(output_file, 'connected on port {} found {}'.format(given_port, v))
+                    # get serial port access for each serial device
+                    controller = serial.Serial(given_port, 
+                                               PORT_SPEED, 
+                                               timeout=TIMEOUT_IN_SEC)
+                    # give Arduino time to reset after serial open causes a reset
+                    time.sleep(RESET_TIME_IN_SEC)  
+                    v='<TBD>'
+                    try:
+                        controller.write(READ_VERSION_COMMAND)
+                        controller.flush()
+                        v = controller.readline().decode('UTF-8').strip()
+                    except:
+                        v = None
+                        raise RuntimeError('invalid version of "{}" received from device'.format(v))
+                    if DEBUG:
+                        print('created SerialArduinoGpioController for "{}"'.format(given_port),
+                              file=sys.stderr, flush=True)
+                        print('found version of {}'.format(v),
+                              file=sys.stderr, flush=True)
     
+                    emit_event(output_file, 'connected on port {} found {}'.format(given_port, v))
+                except:
+                    # if needed clean up
+                    if controller:
+                        controller.close()
+                    controller = None  # just to be sure
 
-            # try to get and process a sample
-            try:
-                controller.write(READ_STATUS_COMMAND)
-                controller.flush()
-                line = controller.readline().decode('UTF-8').strip()
-                if DEBUG:
-                    print('line from controller is "{}"'.format(line),
-                          file=sys.stderr, flush=True)
-                data = json.loads(line)
-                if DEBUG:
-                    print('data from controller is "{}"'.format(data),
-                          file=sys.stderr, flush=True)
-                if 'visitor_count' in data:
-                    if data['visitor_count'] > 0:
-                        emit_sample(output_file, given_port, {'visitor_count':data['visitor_count']} )
-                if 'low_battery' in data:
-                    if previous_low_battery_state != data['low_battery']:
-                        this_low_battery = data['low_battery']
-                        emit_sample(output_file, given_port, {'low_battery':this_low_battery})
-                        previous_low_battery_state = this_low_battery
-            except Exception as e:
-                event_text = 'While reading controller {} caught exception of {}.  removing'.format(given_port, e)
-                emit_event(output_file, event_text)
-                controller.close()
-                controller = None
-                if DEBUG:
-                    print(event_text.format(),
-                          file=sys.stderr, flush=True)
+            # only try to read a sample if the controller is available
+            if controller is not None:
+                # try to get and process a sample
+                try:
+                    controller.write(READ_STATUS_COMMAND)
+                    controller.flush()
+                    line = controller.readline().decode('UTF-8').strip()
+                    if DEBUG:
+                        print('line from controller is "{}"'.format(line),
+                              file=sys.stderr, flush=True)
+                    data = json.loads(line)
+                    if DEBUG:
+                        print('data from controller is "{}"'.format(data),
+                              file=sys.stderr, flush=True)
+                    if 'visitor_count' in data:
+                        if data['visitor_count'] > 0:
+                            emit_sample(output_file, given_port, {'visitor_count':data['visitor_count']} )
+                    if 'low_battery' in data:
+                        if previous_low_battery_state != data['low_battery']:
+                            this_low_battery = data['low_battery']
+                            emit_sample(output_file, given_port, {'low_battery':this_low_battery})
+                            previous_low_battery_state = this_low_battery
+                except Exception as e:
+                    event_text = 'While reading controller {} caught exception of {}.  removing'.format(given_port, e)
+                    emit_event(output_file, event_text)
+                    controller.close()
+                    controller = None
+                    if DEBUG:
+                        print(event_text.format(),
+                              file=sys.stderr, flush=True)
                     
             # wait till next sample time            
             next_sample_time = next_sample_time + sample_interval
