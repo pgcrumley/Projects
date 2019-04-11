@@ -26,8 +26,10 @@
 [Unit]
 Description=Driveway alerts from Arduino connected on a serial port to modified Mighty Mule Driveway Alarm
 
+# The device on the following line may need to be changed depending on your
+# system configuration
 [Service]
-ExecStart=/opt/Projects/MightyMuleMonitor/MightyMuleMonitor.py
+ExecStart=/opt/Projects/MightyMuleMonitor/MightyMuleMonitor.py -p /dev/ttyUSB0
 
 [Install]
 WantedBy=multi-user.target
