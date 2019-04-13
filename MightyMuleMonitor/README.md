@@ -28,7 +28,9 @@ Become root for the next few operations:
     
 This will pull in many projects.  You can trim later if you like:
 
+    cd /opt
     git clone https://github.com/pgcrumley/Projects.git
+    cd Projects/MightyMuleMonitor
 
 Install python3 using a command of:
 
@@ -119,10 +121,9 @@ Check to make sure the log is being written with
 
     cat /opt/Projects/logs/MightMuleMonitor.log
     
-If all looks good you may create a service to run the moninitor without 
+If all looks good you may create a service to run the monitor without 
 intervention with the `MightyMuleMonitor.service`.
 
-    cp MightyMuleMonitor.service /lib/systems/system
     
 If your serial port name was not `/dev/ttyUSB0` you will need to change
 the default value in the file.  Use your favorite editor to change the
