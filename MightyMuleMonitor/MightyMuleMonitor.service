@@ -22,9 +22,14 @@
 #
 # @author: pgcrumley@gmail.com
 #
+# Note use of After and Wants to help ensure the network is running before
+# starting this service
+#
 
 [Unit]
 Description=Driveway alerts from Arduino connected on a serial port to modified Mighty Mule Driveway Alarm
+After=network-online.target
+Wants=network-online.target
 
 # The device on the following line may need to be changed depending on your
 # system configuration

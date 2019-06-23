@@ -22,9 +22,14 @@
 #
 # @author: pgcrumley@gmail.com
 #
+# Note use of After and Wants to help ensure the network is running before
+# starting this service
+#
 
 [Unit]
 Description=Very simple web server to sample Raspberry Pi camera and return JPEG
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 ExecStart=/opt/Projects/CameraServer/CameraServer.py
