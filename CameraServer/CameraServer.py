@@ -30,6 +30,8 @@ By default will accept GET from any address on port 5000
 """
 
 import argparse
+import datetime
+import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import io
 import sys
@@ -41,56 +43,103 @@ DEBUG = None
 
 DEFAULT_LISTEN_ADDRESS = '0.0.0.0'    # respond to request from any address
 DEFAULT_LISTEN_PORT = '5000'            # IP port 5000
-DEFAULT_SERVER_ADDRESS = (DEFAULT_LISTEN_ADDRESS, DEFAULT_LISTEN_PORT)
 
-MINIMUM_PREVIEW_TIME_IN_SECONDS = 2
+MINIMUM_PREVIEW_TIME_IN_SECONDS = 0.25
+
+DEFAULT_ICON_FILE_NAME = '/opt/Projects/CameraServer/favicon.ico'
+FAVICON = None
+
+DEFAULT_LOG_FILE_NAME = '/opt/Projects/logs/CameraServer.log'
+log_file = None
 
 
+def emit_json_map(output, json_map):
+    '''
+    generate a time stamp in UTC for use in the output
+    
+    A 'when' entry with the time stamp is added to the json_map.
+    '''
+    when = datetime.datetime.now(datetime.timezone.utc)
+    when_str = when.isoformat()
+    json_map['when'] = when_str
+    message = json.dumps(json_map)
+    output.write('{}\n'.format(message))
+    output.flush()
+
+
+def emit_event(output, event_text):
+    '''
+    send a line with an event to the output with a time stamp
+    '''
+    item = {'event':event_text}
+    emit_json_map(output, item)
+
+
+def capture_image():
+    '''
+    create in memory image
+    '''
+    my_stream = io.BytesIO()
+    with PiCamera() as camera:
+        if DEBUG:
+            print("camera.revision = {}".format(camera.revision))
+            print("camera.MAX_RESOLUTION = {}".format(camera.MAX_RESOLUTION))
+            print("default camera.resolution = {}".format(camera.resolution))
+        # disable LED on camera
+        camera.led = False
+        camera.resolution = camera.MAX_RESOLUTION
+        if DEBUG:
+            print("camera.resolution = {}".format(camera.resolution))
+        camera.start_preview()
+        # Camera warm-up time
+        sleep(MINIMUM_PREVIEW_TIME_IN_SECONDS)
+        camera.capture(my_stream, 'jpeg', quality=100)
+        camera.stop_preview()
+        # get the data
+        image = bytearray(my_stream.getvalue())
+        if DEBUG:
+            print("len(image) = {}".format(len(image)))
+
+        return bytearray(image)
+
+    
 class Camera_HTTPServer_RequestHandler(BaseHTTPRequestHandler):
     '''
     A subclass of BaseHTTPRequestHandler to provide camera output.
     '''
 
-    # can be set to request something other than MAX_RESOLUTION
-    default_resolution = None
-    
     def do_GET(self):
         '''
         handle the HTTP GET request
         '''
-        # Create an in-memory stream for image
-        my_stream = io.BytesIO()
-        with PiCamera() as camera:
-            if DEBUG:
-                print("camera.revision = {}".format(camera.revision))
-                print("camera.MAX_RESOLUTION = {}".format(camera.MAX_RESOLUTION))
-                print("default camera.resolution = {}".format(camera.resolution))
-            # disable LED on camera
-            camera.led = False
-            if Camera_HTTPServer_RequestHandler.default_resolution:
-                camera.resolution = Camera_HTTPServer_RequestHandler.default_resolution
-            else:
-                camera.resolution = camera.MAX_RESOLUTION
-            if DEBUG:
-                print("camera.resolution = {}".format(camera.resolution))
-            camera.start_preview()
-            # Camera warm-up time
-            sleep(MINIMUM_PREVIEW_TIME_IN_SECONDS)
-            camera.capture(my_stream, 'jpeg')
-            camera.stop_preview()
+        global FAVICON
+        global log_file
 
+        if DEBUG:
+            print('request path = "{}"'.format(self.path),
+                  file=sys.stderr, flush=True)
+        
+        emit_event(log_file, 'request of "{}," from {}'.format(self.path,
+                                                               self.client_address))
+        # deal with site ICON 
+        if self.path == '/favicon.ico':
+            self.send_response(200)
+            self.send_header('Content-type','image/x-icon')
+            self.end_headers()
+            self.wfile.write(FAVICON)
+            emit_event(log_file, 'done sending favicon.ico of length {}'.format(len(FAVICON)))
+            return
+        
         # Send response status code
         self.send_response(200)
- 
         # Send headers
         self.send_header('Content-type','image/jpeg')
         self.end_headers()
-        image = my_stream.getvalue()
-        if DEBUG:
-            print("len(image) = {}".format(len(image)))
-                  
-        self.wfile.write(my_stream.getvalue())
+        image=capture_image()
+        self.wfile.write(image)
+        emit_event(log_file, 'done sending image of length {}'.format(len(image)))
         return
+    
     
     def log_message(self, format, *args):
         '''
@@ -102,16 +151,20 @@ class Camera_HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 # main
 #
 if __name__ == '__main__':
+   
     parser = argparse.ArgumentParser(description='web server to capture image from raspberry pi camera')
     parser.add_argument('-d', '--debug', 
                         help='turn on debugging', 
                         action='store_true')
+    parser.add_argument('-a', '--address', 
+                        help='v4 address for web server', 
+                        default=DEFAULT_LISTEN_ADDRESS)
     parser.add_argument('-p', '--port', 
                         help='port number for web server', 
                         default=DEFAULT_LISTEN_PORT)
-    parser.add_argument('-r', '--resolution', 
-                        help='resolution of image', 
-                        default=None)
+    parser.add_argument("-l", "--log_filename", 
+                        help="file to log data, create or append", 
+                        default=DEFAULT_LOG_FILE_NAME)
     args = parser.parse_args()
 
     if (args.debug):
@@ -119,22 +172,35 @@ if __name__ == '__main__':
         print('turned on DEBUG from command line.',
               file=sys.stderr, flush=True)
 
+    log_filename = args.log_filename
+    given_address = args.address
     given_port = int(args.port)
-    resolution = args.resolution
+
+    server_address = (given_address, given_port)
     
-    server_address = (DEFAULT_LISTEN_ADDRESS,given_port)
+    # open file to log pressure over time
+    log_file = open(log_filename, 'a')
+    emit_event(log_file, 'STARTING CameraServer')
+    emit_event(log_file, 'address: {}'.format(server_address))
+    
+    with open(DEFAULT_ICON_FILE_NAME, 'rb') as icon_file:
+        FAVICON = bytearray(icon_file.read())
+    emit_event(log_file, 'read icon file of length = {}'.format(len(FAVICON)))
+    if DEBUG:
+        print('read icon file of length = {}'.format(len(FAVICON)),
+              file=sys.stderr, flush=True)
 
     if DEBUG:
-        print('server_address = {}'.format(server_address),
+        print('log_filename = {}'.format(log_filename),
               file=sys.stderr, flush=True)
-        print('requested camera resolution = {}'.format(resolution),
+        print('server_address = {}'.format(server_address),
               file=sys.stderr, flush=True)
 
     httpd_server = HTTPServer(server_address,
                               Camera_HTTPServer_RequestHandler)
-    if resolution:
-        Camera_HTTPServer_RequestHandler.default_resolution = resolution
+    
     if DEBUG:
-        print('running server listening on {}...'.format(DEFAULT_SERVER_ADDRESS),
+        print('running server listening on {}...'.format(server_address),
               file=sys.stderr, flush=True)
+    emit_event(log_file, 'entering httpd_server.serve_forever()')
     httpd_server.serve_forever()
