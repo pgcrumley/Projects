@@ -26,7 +26,7 @@ SOFTWARE.
 
 Very simple web server to provide a PNG image from a USB camera
 
-By default will accept GET from any address on port 6000
+By default will accept GET from any address on port 4000
 """
 
 import argparse
@@ -34,6 +34,7 @@ import cv2
 import datetime
 import json
 import sys
+import time
 # use newer, threading version, if available
 if (sys.version_info[0] >= 3 and sys.version_info[1] >= 7):
     from http.server import BaseHTTPRequestHandler, HTTPServer, ThreadingHTTPServer
@@ -43,10 +44,12 @@ else:
 DEBUG = None
 
 DEFAULT_LISTEN_ADDRESS = '0.0.0.0'    # respond to request from any address
-DEFAULT_LISTEN_PORT = '6000'            # IP port 6000
+DEFAULT_LISTEN_PORT = '4000'            # IP port
 
 DEFAULT_VIDEO_DEVICE = 0
 video_device=DEFAULT_VIDEO_DEVICE
+
+DEFAULT_INTER_FRAME_DELAY_IN_SECONDS = 0.3  # seconds to wait between samples
 
 DEFAULT_ICON_FILE_NAME = '/opt/Projects/UsbCameraServer/favicon.ico'
 FAVICON = None
@@ -82,6 +85,11 @@ def capture_image(video_device=0):
         cap = cv2.VideoCapture(video_device)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
+        # take a couple samples to give the camera a chance to adjust
+        _, frame = cap.read()
+        time.sleep(DEFAULT_INTER_FRAME_DELAY_IN_SECONDS)
+        _, frame = cap.read()
+        time.sleep(DEFAULT_INTER_FRAME_DELAY_IN_SECONDS)
         _, frame = cap.read()
         _, im_buf_arr = cv2.imencode('.png', frame)
         result = im_buf_arr.tobytes()
