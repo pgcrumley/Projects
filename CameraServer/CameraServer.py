@@ -2,7 +2,7 @@
 """
 MIT License
 
-Copyright (c) 2019 Paul G Crumley
+Copyright (c) 2019, 2020 Paul G Crumley
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -32,10 +32,14 @@ By default will accept GET from any address on port 5000
 import argparse
 import datetime
 import json
-from http.server import BaseHTTPRequestHandler, HTTPServer
 import io
 import sys
 from time import sleep
+# use newer, threading version, if available
+if (sys.version_info[0] >= 3 and sys.version_info[1] >= 7):
+    from http.server import BaseHTTPRequestHandler, HTTPServer, ThreadingHTTPServer
+else:
+    from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from picamera import PiCamera
 
@@ -189,15 +193,19 @@ if __name__ == '__main__':
     if DEBUG:
         print('read icon file of length = {}'.format(len(FAVICON)),
               file=sys.stderr, flush=True)
-
-    if DEBUG:
         print('log_filename = {}'.format(log_filename),
               file=sys.stderr, flush=True)
         print('server_address = {}'.format(server_address),
               file=sys.stderr, flush=True)
 
-    httpd_server = HTTPServer(server_address,
-                              Camera_HTTPServer_RequestHandler)
+    # use newer, threading version, if available
+    if (sys.version_info[0] >= 3 and sys.version_info[1] >= 7):
+        httpd_server = ThreadingHTTPServer(server_address,
+                                           Camera_HTTPServer_RequestHandler)
+    else:
+        emit_event(log_file, 'python version < 3.7 so using HTTPServer')
+        httpd_server = HTTPServer(server_address,
+                                  Camera_HTTPServer_RequestHandler)
     
     if DEBUG:
         print('running server listening on {}...'.format(server_address),
