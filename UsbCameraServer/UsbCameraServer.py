@@ -30,8 +30,13 @@ Very simple web server to provide a PNG image from a USB camera
 /capture-devices/N   return PNG image if N is a valid device
 /capture-devices     return JSON list of URLs for valid capture-device/N (note, no trailing /)
 /favicon.ico         return image in ICO format
+/kill                exit the process so system controller can restart it (deferred)
 
 By default will accept GET from any address on port 4000
+
+TODO:
+-- Figure out a way to dynamically detect addition / removal of capture devices
+
 """
 import os
 os.environ['OPENCV_VIDEOIO_PRIORITY_MSMF']='0'  # work around for OpenCV issue
@@ -63,6 +68,9 @@ FAVICON = None
 
 DEFAULT_LOG_FILE_NAME = '/opt/Projects/logs/UsbCameraServer.log'
 log_file = None
+
+# enables the URL of '/kill' to kill the server
+ALLOW_REMOTE_KILL = False
 
 AVAILABLE_CAPTURE_DEVICES = list()
 
@@ -152,6 +160,18 @@ class Camera_HTTPServer_RequestHandler(BaseHTTPRequestHandler):
         
         emit_event(log_file, 'request of "{}," from {}'.format(self.path,
                                                                self.client_address))
+        if ALLOW_REMOTE_KILL:
+            # allow an external entity to remotely kill the daemon so it can be restarted 
+            if self.path == '/kill':
+                self.send_response(200)
+                self.send_header('Content-type','text/text')
+                self.end_headers()
+                self.wfile.write('killing server'.encode('utf-8'))
+                emit_event(log_file, 'killing server')
+                log_file.flush()
+                exit(10)
+                return
+
         # deal with site ICON 
         if self.path == '/favicon.ico':
             self.send_response(200)
@@ -163,7 +183,7 @@ class Camera_HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 
         # return JSON list of valid capture URLs 
         if self.path == '/capture-devices':
-            find_capture_devices()
+            # find_capture_devices()  # seems OpenCV only updates devices at startup
             url_list = list()
             for d in AVAILABLE_CAPTURE_DEVICES:
                 url_list.append('/capture-devices/{}'.format(d))
@@ -304,6 +324,7 @@ if __name__ == '__main__':
                                   Camera_HTTPServer_RequestHandler)
 
     AVAILABLE_CAPTURE_DEVICES = find_capture_devices()
+    emit_event(log_file, 'found available capture devices of "{}"'.format(AVAILABLE_CAPTURE_DEVICES))
     
     periodic_sample_thread = threading.Thread(target=periodic_capture_sample, args=(video_device,), daemon=True)
     if DEBUG:
