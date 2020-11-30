@@ -85,13 +85,13 @@ Leave root access mode with
 Point your web browser to the port for the Raspbery Pi.  My Raspberry Pi
 is at address 192.l68.1.227 so:
 
-    http://192.168.1.227:6000/
+    http://192.168.1.227:4000/
 
 After a couple seconds an image should be found in our browser.
 
 Command line access with programs such as `wget` will also work.  For example:
 
-    wget -qO- http://192.168.1.227:6000/ > image.png
+    wget -qO- http://192.168.1.227:4000/ > image.png
     
 ### Resources
 
