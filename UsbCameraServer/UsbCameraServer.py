@@ -163,6 +163,7 @@ class Camera_HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 
         # return JSON list of valid capture URLs 
         if self.path == '/capture-devices':
+            find_capture_devices()
             url_list = list()
             for d in AVAILABLE_CAPTURE_DEVICES:
                 url_list.append('/capture-devices/{}'.format(d))
