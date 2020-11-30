@@ -26,14 +26,21 @@ SOFTWARE.
 
 Very simple web server to provide a PNG image from a USB camera
 
+/                    return PNG image for default device
+/capture-devices/N   return PNG image if N is a valid device
+/capture-devices     return JSON list of URLs for valid capture-device/N (note, no trailing /)
+/favicon.ico         return image in ICO format
+
 By default will accept GET from any address on port 4000
 """
-
+import os
+os.environ['OPENCV_VIDEOIO_PRIORITY_MSMF']='0'  # work around for OpenCV issue
 import argparse
 import cv2
 import datetime
 import json
 import sys
+import threading
 import time
 # use newer, threading version, if available
 if (sys.version_info[0] >= 3 and sys.version_info[1] >= 7):
@@ -49,13 +56,16 @@ DEFAULT_LISTEN_PORT = '4000'            # IP port
 DEFAULT_VIDEO_DEVICE = 0
 video_device=DEFAULT_VIDEO_DEVICE
 
-DEFAULT_INTER_FRAME_DELAY_IN_SECONDS = 0.3  # seconds to wait between samples
+PERIODIC_CAPTURE_SAMPLE_INTERVAL_IN_SECONDS = 60 * 10 # every 10 minutes
 
 DEFAULT_ICON_FILE_NAME = '/opt/Projects/UsbCameraServer/favicon.ico'
 FAVICON = None
 
 DEFAULT_LOG_FILE_NAME = '/opt/Projects/logs/UsbCameraServer.log'
 log_file = None
+
+AVAILABLE_CAPTURE_DEVICES = list()
+
 
 def emit_json_map(output, json_map):
     '''
@@ -75,31 +85,55 @@ def emit_event(output, event_text):
     send a line with an event to the output with a time stamp
     '''
     item = {'event':event_text}
+    if DEBUG:
+        print('LOG: "{}"'.format(item),
+              file=sys.stderr, flush=True)
     emit_json_map(output, item)
 
+_capture_lock = threading.Lock()
 def capture_image(video_device=0):
     '''
     create in memory image from first USB camera
     '''
-    try:
-        cap = cv2.VideoCapture(video_device)
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
-        # take a couple samples to give the camera a chance to adjust
-        _, frame = cap.read()
-        time.sleep(DEFAULT_INTER_FRAME_DELAY_IN_SECONDS)
-        _, frame = cap.read()
-        time.sleep(DEFAULT_INTER_FRAME_DELAY_IN_SECONDS)
-        _, frame = cap.read()
-        _, im_buf_arr = cv2.imencode('.png', frame)
-        result = im_buf_arr.tobytes()
+    with _capture_lock:
+        try:
+            cap = cv2.VideoCapture(video_device)
+            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 3840)
+            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 2160)
+            # take a couple samples to give the camera a chance to adjust
+            _, frame = cap.read()
+            _, im_buf_arr = cv2.imencode('.png', frame)
+            result = im_buf_arr.tobytes()
+            if DEBUG:
+                print('captured image of length {}'.format(len(result)),
+                      file=sys.stderr, flush=True)
+            return bytearray(result)
+        finally:
+            cap.release()
+
+LAST_DEVICE_TO_TRY = 99
+def find_capture_devices():
+    '''
+    return a list of the available capture devices
+    
+    Also update AVAILABLE_CAPTURE_DEVICES
+    '''
+    result = list()
+    with _capture_lock:
+        for dev in range(0,LAST_DEVICE_TO_TRY+1):
+            try:
+                cap = cv2.VideoCapture(dev)
+                if cap.isOpened():
+                    result.append(dev)
+            finally:
+                cap.release()
+        AVAILABLE_CAPTURE_DEVICES = result
         if DEBUG:
-            print('captured image of length {}'.format(len(result)),
+            print('Found available capture devices of {}'.format(result),
                   file=sys.stderr, flush=True)
-        return bytearray(result)
-    finally:
-        cap.release()
+        return result        
         
+
 class Camera_HTTPServer_RequestHandler(BaseHTTPRequestHandler):
     '''
     A subclass of BaseHTTPRequestHandler to provide camera output.
@@ -126,15 +160,61 @@ class Camera_HTTPServer_RequestHandler(BaseHTTPRequestHandler):
             self.wfile.write(FAVICON)
             emit_event(log_file, 'done sending favicon.ico of length {}'.format(len(FAVICON)))
             return
+
+        # return JSON list of valid capture URLs 
+        if self.path == '/capture-devices':
+            url_list = list()
+            for d in AVAILABLE_CAPTURE_DEVICES:
+                url_list.append('/capture-devices/{}'.format(d))
+            self.send_response(200)
+            self.send_header('Content-type','text/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(url_list).encode('utf-8'))
+            emit_event(log_file, 'done sending list with {} valid capture-device URLs'.format(len(url_list)))
+            return
         
-        # Send response status code
-        self.send_response(200)
-        # Send headers
-        self.send_header('Content-type','image/png')
+        # return JSON list of valid capture URLs 
+        if '/capture-devices/' in self.path:
+            try:
+                d = int(self.path.split('/capture-devices/')[1])
+                try:
+                    image = capture_image(video_device=d)
+                    self.send_response(200)
+                    self.send_header('Content-type','image/png')
+                    self.end_headers()
+                    self.wfile.write(image)
+                    emit_event(log_file, 'done sending image of length {} from device {}'.format(len(image), d))
+                    return
+                except:
+                    self.send_response(404)
+                    self.send_header('Content-type','text/text')
+                    self.end_headers()
+                    self.wfile.write('404 NOT FOUND: no device {}'.format(d).encode('utf-8'))
+                    emit_event(log_file, '404 NOT FOUND: no device {}'.format(d))
+                    return
+            except:
+                self.send_response(400)
+                self.send_header('Content-type','text/text')
+                self.end_headers()
+                self.wfile.write('400 BAD REQUEST: expect URL of form /capture-devices/#'.encode('utf-8'))
+                emit_event(log_file, '400 BAD REQUEST: expect URL of form /capture-devices/#')
+                return
+
+        if self.path == '/':
+            self.send_response(200)
+            self.send_header('Content-type','image/png')
+            self.end_headers()
+            image = capture_image(video_device=video_device)
+            self.wfile.write(image)
+            emit_event(log_file, 'done sending image of length {}'.format(len(image)))
+            return
+
+        # if none of the known patterns are matched, it is an error
+        self.send_response(400)
+        self.send_header('Content-type','text/text')
         self.end_headers()
-        image = capture_image(video_device=video_device)
-        self.wfile.write(image)
-        emit_event(log_file, 'done sending image of length {}'.format(len(image)))
+        self.wfile.write('400 BAD REQUEST: expect URL of "{}" is not recognized'.format(self.path).encode('utf-8'))
+        emit_event(log_file, '400 BAD REQUEST: expect URL of "{}" is not recognized'.format(self.path))
         return
 
     def log_message(self, format, *args):
@@ -143,6 +223,22 @@ class Camera_HTTPServer_RequestHandler(BaseHTTPRequestHandler):
         '''
         return
 
+def periodic_capture_sample(video_device=0):
+    '''
+    Used to run a thread that periodically takes an image to allow  
+    the camera to adapt to lighting conditins.
+    '''
+    while True:
+        for d in AVAILABLE_CAPTURE_DEVICES:
+            if DEBUG:
+                print('about to take a periodic image sample for device {}'.format(d),
+                      file=sys.stderr, flush=True)
+            discard_image = capture_image(video_device=d)
+            if DEBUG:
+                print('done taking a periodic image sample for device {}'.format(d),
+                      file=sys.stderr, flush=True)
+        time.sleep(PERIODIC_CAPTURE_SAMPLE_INTERVAL_IN_SECONDS)
+        
 #
 # main
 #
@@ -177,13 +273,13 @@ if __name__ == '__main__':
     video_device = int(args.video_device)
 
     server_address = (given_address, given_port)
-    
+
     # open file to log pressure over time
     log_file = open(log_filename, 'a')
     emit_event(log_file, 'STARTING UsbCameraServer')
     emit_event(log_file, 'address: {}'.format(server_address))
     emit_event(log_file, 'video_device: {}'.format(video_device))
-    
+
     with open(DEFAULT_ICON_FILE_NAME, 'rb') as icon_file:
         FAVICON = bytearray(icon_file.read())
     emit_event(log_file, 'read icon file of length = {}'.format(len(FAVICON)))
@@ -205,7 +301,18 @@ if __name__ == '__main__':
         emit_event(log_file, 'python version < 3.7 so using HTTPServer')
         httpd_server = HTTPServer(server_address,
                                   Camera_HTTPServer_RequestHandler)
+
+    AVAILABLE_CAPTURE_DEVICES = find_capture_devices()
     
+    periodic_sample_thread = threading.Thread(target=periodic_capture_sample, args=(video_device,), daemon=True)
+    if DEBUG:
+        print('about to start periodic_sample_thread',
+              file=sys.stderr, flush=True)
+    periodic_sample_thread.start()
+    if DEBUG:
+        print('periodic_sample_thread started',
+              file=sys.stderr, flush=True)
+
     if DEBUG:
         print('running server listening on {}...'.format(server_address),
               file=sys.stderr, flush=True)
