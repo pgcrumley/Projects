@@ -19,6 +19,8 @@ can be used to capture a video device other than 0.  Look in /dev for video devi
 
 Edit the UsbCameraServer.service file to change the video_device to use.
 
+Run the __FindCaptureDevices.py__ command to determine what devices are found.
+
 ### Configure the software (15 minutes -- longer if system is not up-to-date)
 
 Become root for the next few operations:
@@ -91,6 +93,15 @@ Command line access with programs such as `wget` will also work.  For example:
 
     wget -qO- http://192.168.1.227:6000/ > image.png
     
+### Resources
+
+The server responds to the following URLs:
+
+* /                    returns PNG image for default device
+* /capture-devices/N   returns PNG image if N is a valid device
+* /capture-devices     returns JSON list of URLs for valid capture-device/N (note, no trailing /)
+* /favicon.ico         returns image in ICO format
+
 ### Enjoy! 
 
 Congratulations!  You can now easily capture an image from the first attached
