@@ -24,7 +24,15 @@
 # @author: pgcrumley@gmail.com
 #
 
-pip3 install -r requirements.txt
+#pip3 install -r requirements.txt
+
+if [ "$EUID" -ne 0 ]
+  then echo "Must run as root"
+  exit
+fi
+
+apt update
+apt install python3-opencv
 
 mkdir -p /opt/Projects/logs
 
