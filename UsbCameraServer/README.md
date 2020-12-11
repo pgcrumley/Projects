@@ -27,21 +27,17 @@ Become root for the next few operations:
 
     sudo su -
     
+Install git python3 modules using a command of:
+
+    apt-get update
+    apt-get -y install git python3 python3-dev python3-opencv 
+    
 This will pull in many projects.  You can trim later if you like:
 
     cd /opt
     git clone https://github.com/pgcrumley/Projects.git
     cd Projects/UsbCameraServer
     
-Install python3 using a command of:
-
-    apt-get update
-    apt-get -y install python3 python3-dev git
-    
-Install required python3 package(s) using a command of:
-
-    pip3 install -r requirements.txt
-
 Make sure `python3` works and CV2 is installed by typing:
 
     python3
