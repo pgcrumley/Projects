@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # MIT License
 #
 # Copyright (c) 2020 Paul G Crumley
