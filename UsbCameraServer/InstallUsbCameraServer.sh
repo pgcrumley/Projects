@@ -32,7 +32,7 @@ if [ "$EUID" -ne 0 ]
 fi
 
 apt update
-apt install python3-opencv
+apt install -y python3-opencv 
 
 mkdir -p /opt/Projects/logs
 
