@@ -1,0 +1,42 @@
+# MIT License
+#
+# Copyright (c) 2021 Paul G Crumley
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+# @author: pgcrumley@gmail.com
+#
+# Note use of After and Wants to help ensure the network is running before
+# starting this service
+#
+# The "-v" parameter allows the use of a different video device.  If there is
+# no build-in camera, 0 is the first USB camera.  This can also allow use of a 
+# second or later USB camera.
+#
+
+[Unit]
+Description=After the system boots and is online, take a picture, send it, shutdown
+After=network-online.target
+Requires=network-online.target
+
+[Service]
+ExecStart=/opt/Projects/UsbCameraServer/BootSnapSendShutdownService.sh -v 0
+
+[Install]
+WantedBy=multi-user.target

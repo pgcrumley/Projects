@@ -98,9 +98,34 @@ The server responds to the following URLs:
 * /capture-devices     returns JSON list of URLs for valid capture-device/N (note, no trailing /)
 * /favicon.ico         returns image in ICO format
 
+### Boot Snap Send Shutdown
+
+The **BootSnapSendShutdown.sh** script and service will take a 
+picture and send it
+to an e-mail address when the system is booted.  
+The script will also optionally
+shutdown the system (if the file **/boot/shutdown\_after\_send** is present)
+
+This allows the system to be connected to a motion detector socket and when
+the detector powers on the socket the system will boot, then take a picture,
+send it, then do an orderly shutdown to protect the file system so the system
+is more likely to reboot properly the next time it is started.
+
+The file that controls the shutdown is kept on the **/boot** file system to make
+it easier to disable the shutdown for debug purposes as the **/boot** 
+file system can often be mounted on other systems for changes.
+
+When **InstallBootSnapSendShutdownService.sh** is run 
+(as **root**) it will install
+the needed packages and if the file is not already present, 
+install a skeleton **.msmtprc** file in **/root**.
+
+The **BootSnapSendShutdown.sh** script defaults to running the 
+**TestCamera.py** program
+to retrieve a photo but it can also fetch the image from a local web server.  
+See the file to make the change. 
+
 ### Enjoy! 
 
 Congratulations!  You can now easily capture an image from the first attached
 USB camera to be retrieved by other pieces of software or from your browser.  
-
-Enjoy!

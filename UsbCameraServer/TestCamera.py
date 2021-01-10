@@ -24,8 +24,7 @@ SOFTWARE.
 
 @author: pgcrumley@gmail.com
 
-Very simple web server to provide a PNG camera image from the first USB camera
-and write a PNG file.
+Capture a PNG camera image from the first USB camera and write a PNG file.
 """
 
 import argparse
