@@ -40,7 +40,11 @@ if [ -f $TO_ADDRESS_FILE ]; then
     # USE THIS RATHER THAN ABOVE COMMAND IF RUNNING A UsbCameraServer LOCALLY
     # wget -O $IMAGE_FILE http://127.0.0.1:4000/capture-devices/0
     date > $MAIL_FILE
-    ls -l $SHUTDOWN_FILE >> $MAIL_FILE
+    if [ -f $SHUTDOWN_FILE ]; then
+        ls -l $SHUTDOWN_FILE >> $MAIL_FILE
+    else
+        echo $SHUTDOWN_FILE not present >> $MAIL_FILE
+    fi
     mailx -s "captured image" -A $IMAGE_FILE $( cat $TO_ADDRESS_FILE ) < $MAIL_FILE
     echo "mailx ended with status of $?" >> $LOG_FILE
 else
